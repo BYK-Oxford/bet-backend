@@ -1,0 +1,10 @@
+fastapi==0.95.2
+uvicorn==0.22.0
+sqlalchemy==2.0.11
+alembic==1.9.4
+pydantic==1.10.5
+# dontenv
+# psycopg2
+# asyncpg==0.27.0  # if using async PostgreSQL driver
+# pip uninstall fastapi pydantic sqlalchemy alembic uvicorn -y
+# pip install fastapi==0.95.2 "pydantic<2.0,>=1.10.14" sqlalchemy alembic uvicorn
