@@ -9,12 +9,18 @@ class SeasonService:
 
     def get_or_create_season(self, season_year: str):
         """Retrieve a season by year or create a new one."""
-        season = self.db.query(Season).filter(Season.season_year == self.determine_season(season_year)).first()
+        # Check if season_year is already in correct format (YYYY/YYYY)
+        if '/' in season_year:
+            formatted_season = season_year
+        else:
+            formatted_season = self.determine_season(season_year)
+        
+        season = self.db.query(Season).filter(Season.season_year == formatted_season).first()
         
         if not season:
             season = Season(
                 season_id=str(uuid.uuid4()),
-                season_year=self.determine_season(season_year)  # Call the method here
+                season_year=formatted_season
             )
             self.db.add(season)
             self.db.commit()
@@ -29,7 +35,7 @@ class SeasonService:
         year = match_date.year
         month = match_date.month
 
-        # If match is in January-July, it's part of the previous year’s season
+        # If match is in January-July, it's part of the previous year's season
         if month <= 7:
             season = f"{year-1}/{year}"
         else:
