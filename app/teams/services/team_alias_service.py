@@ -8,13 +8,20 @@ class TeamAliasService:
 
     def get_or_create_alias(self, team_id: str, alias_name: str):
         """Retrieve an alias for a team or create a new one."""
-        alias = self.db.query(TeamAlias).filter(TeamAlias.alias_name == alias_name).first()
         
+        # ✅ First, ensure the team exists
+        team = self.db.query(Team).filter(Team.team_id == team_id).first()
+        if not team:
+            raise ValueError(f"Team with ID {team_id} does not exist. Cannot create alias.")
+
+        # ✅ Check if alias already exists
+        alias = self.db.query(TeamAlias).filter(TeamAlias.alias_name == alias_name, TeamAlias.team_id == team_id).first()
+
         if not alias:
+            # Generate unique alias_id (TA1, TA2, etc.)
             new_id = generate_custom_id(self.db, TeamAlias, "TA", "alias_id")
 
-            alias_id = new_id
-            alias = TeamAlias(alias_id=alias_id, alias_name=alias_name, team_id=team_id)
+            alias = TeamAlias(alias_id=new_id, alias_name=alias_name, team_id=team_id)
             self.db.add(alias)
             self.db.commit()
             self.db.refresh(alias)

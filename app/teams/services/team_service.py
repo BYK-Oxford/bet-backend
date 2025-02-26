@@ -18,47 +18,45 @@ class TeamService:
     def get_or_create_team(self, team_name: str, league_name: str):
         """Retrieve or create a team, ensuring aliases are handled correctly."""
 
-        # Step 1: Check if the team name exists in TeamAlias table
+        # Step 1: Check if the team name exists as an alias
         alias_entry = self.alias_service.get_team_by_alias(team_name)
         if alias_entry:
-            return alias_entry  # Return the official team
+            return alias_entry  # ✅ Return the official team if alias exists
 
-        # Step 2: Check if the team already exists in the Team table
+        # Step 2: Check if the team already exists
         team = self.db.query(Team).filter(Team.team_name == team_name).first()
         if team:
-            return team  # Team already exists, return it
+            return team  # ✅ Return existing team
 
         # Step 3: Determine if the team name is an alias of another team
-        official_team_name = None
-        for real_name, aliases in self.alias_mapping.items():
-            if team_name in aliases:
-                official_team_name = real_name
-                break
+        official_team_name = next((real_name for real_name, aliases in self.alias_mapping.items() if team_name in aliases), None)
 
         # Step 4: If it's an alias, link it to the official team
         if official_team_name:
             team = self.db.query(Team).filter(Team.team_name == official_team_name).first()
             if team:
                 self.alias_service.get_or_create_alias(team.team_id, team_name)
-                return team  # Return the official team
+                return team  # ✅ Return the official team
 
         # Step 5: If the team is entirely new, create it and store alias
         league = self.league_service.get_or_create_league(league_name)
 
-        # At this point, the league service will handle country creation automatically
+        # Generate unique ID for the new team
         new_id = generate_custom_id(self.db, Team, "T", "team_id")
 
         new_team = Team(
             team_id=new_id,
             team_name=team_name,
             league_id=league.league_id,
-            country_id=league.country_id  # Country is now managed by LeagueService
+            country_id=league.country_id
         )
         self.db.add(new_team)
         self.db.commit()
         self.db.refresh(new_team)
 
-        # Step 6: Save this new team name as its own alias
-        self.alias_service.get_or_create_alias(new_team.team_id, team_name)
+        # Step 6: Save this new team name as its own alias (ONLY if not already stored)
+        existing_alias = self.alias_service.get_team_by_alias(team_name)
+        if not existing_alias:
+            self.alias_service.get_or_create_alias(new_team.team_id, team_name)
 
         return new_team

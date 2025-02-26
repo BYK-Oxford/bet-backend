@@ -42,7 +42,7 @@ class MatchService:
         new_id = generate_custom_id(self.db, Match, "M", "match_id")
 
         match = Match(
-            match_id=match_data["match_id"],
+            match_id=new_id,
             date=datetime.strptime(match_data["date"],  "%d/%m/%Y %H:%M"),
             league_id=league.league_id,
             season_id=season.season_id,
