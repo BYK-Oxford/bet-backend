@@ -4,7 +4,6 @@ from app.teams.services.team_service import TeamService
 from app.leagues.services.league_service import LeagueService
 from app.seasons.services.season_service import SeasonService
 
-
 class StandingService:
     def __init__(self, db: Session):
         self.db = db
@@ -14,10 +13,11 @@ class StandingService:
 
     def create_standing(self, standing_data: dict):
         """Create or update a standing record in the database."""
+        
         # Get or create related entities
-        team = self.team_service.get_or_create_team(standing_data["team_name"], standing_data["league_name"])
-        league = self.league_service.get_or_create_league(standing_data["league_name"])
-        season = self.season_service.get_or_create_season(standing_data["season_id"])
+        league = self.league_service.get_or_create_league(standing_data["league"])
+        season = self.season_service.get_or_create_season(standing_data["season"])
+        team = self.team_service.get_or_create_team(standing_data["team"], standing_data["league"])
 
         # Check for existing standing
         existing_standing = (
@@ -31,10 +31,14 @@ class StandingService:
         )
 
         if existing_standing:
-            # Update existing standing
-            for key, value in standing_data.items():
-                if hasattr(existing_standing, key):
-                    setattr(existing_standing, key, value)
+            # Update only non-FK fields
+            update_fields = [
+                "position", "played", "wins", "draws", "losses",
+                "goals_for", "goals_against", "goal_difference", "points"
+            ]
+            for key in update_fields:
+                if key in standing_data:
+                    setattr(existing_standing, key, standing_data[key])
             self.db.commit()
             self.db.refresh(existing_standing)
             return existing_standing
@@ -42,9 +46,9 @@ class StandingService:
         # Create new standing
         standing = Standing(
             standing_id=standing_data["standing_id"],
-            team_id=team.team_id,
-            league_id=league.league_id,
-            season_id=season.season_id,
+            team_id=team.team_id,     
+            league_id=league.league_id,  
+            season_id=season.season_id, 
             position=standing_data["position"],
             played=standing_data["played"],
             wins=standing_data["wins"],

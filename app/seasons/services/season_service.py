@@ -7,16 +7,17 @@ class SeasonService:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_or_create_season(self, season_year: str):
-        """Retrieve a season by year or create a new one."""
-        # Check if season_year is already in correct format (YYYY/YYYY)
-        if '/' in season_year:
-            formatted_season = season_year
+    def get_or_create_season(self, season_input: str):
+        """Retrieve a season by match date or create a new one."""
+        
+        # If input is already in "YYYY/YYYY" format, use it directly
+        if '/' in season_input and len(season_input) == 9:
+            formatted_season = season_input
         else:
-            formatted_season = self.determine_season(season_year)
-        
+            formatted_season = self.determine_season(season_input)
+
         season = self.db.query(Season).filter(Season.season_year == formatted_season).first()
-        
+
         if not season:
             season = Season(
                 season_id=str(uuid.uuid4()),
@@ -27,18 +28,20 @@ class SeasonService:
             self.db.refresh(season)
 
         return season
-    
+
     def determine_season(self, date_str: str) -> str:
         """Determines the football season based on a given match date (DD/MM/YYYY)."""
-        match_date = datetime.strptime(date_str, "%d/%m/%Y")
-        
-        year = match_date.year
-        month = match_date.month
+        try:
+            match_date = datetime.strptime(date_str, "%d/%m/%Y")
+            year = match_date.year
+            month = match_date.month
 
-        # If match is in January-July, it's part of the previous year's season
-        if month <= 7:
-            season = f"{year-1}/{year}"
-        else:
-            season = f"{year}/{year+1}"
+            # If match is in January-July, it's part of the previous year's season
+            if month <= 7:
+                return f"{year-1}/{year}"
+            else:
+                return f"{year}/{year+1}"
 
-        return season
+        except ValueError:
+            raise ValueError(f"Invalid date format: {date_str}. Expected 'DD/MM/YYYY'.")
+
