@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from app.leagues.models import League
 from app.country.services.country_service import CountryService  # Assuming you have this
-import uuid
+from app.core.utils import generate_custom_id
 
 class LeagueService:
     LEAGUE_NAME_MAPPING = {
@@ -48,9 +48,12 @@ class LeagueService:
 
             # Create country using the league code (E0, SC0, etc.)
             country = self.country_service.get_or_create_country(league_code)
+            
+            # Generate a structured ID like C1, C2, C10000
+            new_id = generate_custom_id(self.db, League, "L", "league_id")
 
             league = League(
-                league_id=str(uuid.uuid4()),
+                league_id=new_id,
                 league_code=league_code,
                 league_name=full_league_name,
                 country_id=country.country_id

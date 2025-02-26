@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.teams.models import TeamAlias, Team
-from uuid import uuid4
+from app.core.utils import generate_custom_id
 
 class TeamAliasService:
     def __init__(self, db: Session):
@@ -9,9 +9,11 @@ class TeamAliasService:
     def get_or_create_alias(self, team_id: str, alias_name: str):
         """Retrieve an alias for a team or create a new one."""
         alias = self.db.query(TeamAlias).filter(TeamAlias.alias_name == alias_name).first()
-
+        
         if not alias:
-            alias_id = str(uuid4())
+            new_id = generate_custom_id(self.db, TeamAlias, "TA", "alias_id")
+
+            alias_id = new_id
             alias = TeamAlias(alias_id=alias_id, alias_name=alias_name, team_id=team_id)
             self.db.add(alias)
             self.db.commit()

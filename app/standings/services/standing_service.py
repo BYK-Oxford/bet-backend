@@ -3,6 +3,7 @@ from app.standings.models.standings_model import Standing
 from app.teams.services.team_service import TeamService
 from app.leagues.services.league_service import LeagueService
 from app.seasons.services.season_service import SeasonService
+from app.core.utils import generate_custom_id
 
 class StandingService:
     def __init__(self, db: Session):
@@ -43,9 +44,12 @@ class StandingService:
             self.db.refresh(existing_standing)
             return existing_standing
 
+        
+        new_id = generate_custom_id(self.db, Standing, "S", "standing_id")
+
         # Create new standing
         standing = Standing(
-            standing_id=standing_data["standing_id"],
+            standing_id=new_id,
             team_id=team.team_id,     
             league_id=league.league_id,  
             season_id=season.season_id, 

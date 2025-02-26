@@ -6,7 +6,6 @@ from app.core.database import get_db
 from app.matches.services.match_service import MatchService
 from app.betting_odds.services.betting_odds_service import BettingOddsService
 from app.match_statistics.services.match_statistics_service import MatchStatisticsService
-import uuid
 
 
 class UploadService:
@@ -29,7 +28,6 @@ class UploadService:
                 date =  row["Date"]
                 time = row["Time"]
                 match_data = {
-                    "match_id": str(uuid.uuid4()),
                     "date": f"{date} {time}",
                     "league": row["Div"],
                     "season": row["Date"],
@@ -41,8 +39,7 @@ class UploadService:
 
                 # Prepare betting odds data
                 odds_data = {
-                    "betting_oddds_id": str(uuid.uuid4()),  # Ensure it's a string as per your model
-                    "match_id": match.match_id,
+                   "match_id": match.match_id,
 
                     # Full-time result odds
                     "B365H": row.get("B365H"),

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.teams.models import Team
 from app.leagues.services.league_service import LeagueService
 from app.teams.services.team_alias_service import TeamAliasService
-from uuid import uuid4
+from app.core.utils import generate_custom_id
 
 class TeamService:
     def __init__(self, db: Session):
@@ -46,9 +46,10 @@ class TeamService:
         league = self.league_service.get_or_create_league(league_name)
 
         # At this point, the league service will handle country creation automatically
-        team_id = str(uuid4())
+        new_id = generate_custom_id(self.db, Team, "T", "team_id")
+
         new_team = Team(
-            team_id=team_id,
+            team_id=new_id,
             team_name=team_name,
             league_id=league.league_id,
             country_id=league.country_id  # Country is now managed by LeagueService

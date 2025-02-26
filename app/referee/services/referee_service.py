@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.referee.models import Referee
-import uuid
+from app.core.utils import generate_custom_id
 
 class RefereeService:
     def __init__(self, db: Session):
@@ -11,7 +11,9 @@ class RefereeService:
         referee = self.db.query(Referee).filter(Referee.ref_name == ref_name).first()
         
         if not referee:
-            referee = Referee(ref_id=str(uuid.uuid4()), ref_name=ref_name)
+            new_id = generate_custom_id(self.db, Referee, "R", "ref_id")
+
+            referee = Referee(ref_id=new_id, ref_name=ref_name)
             self.db.add(referee)
             self.db.commit()
             self.db.refresh(referee)

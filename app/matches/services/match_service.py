@@ -5,7 +5,7 @@ from app.leagues.services.league_service import LeagueService
 from app.seasons.services.season_service import SeasonService
 from app.teams.services.team_service import TeamService
 from app.referee.services.referee_service import RefereeService
-
+from app.core.utils import generate_custom_id
 
 class MatchService:
     def __init__(self, db: Session):
@@ -38,6 +38,8 @@ class MatchService:
 
         if existing_match:
             return existing_match  # Prevent duplicate insertion
+        
+        new_id = generate_custom_id(self.db, Match, "M", "match_id")
 
         match = Match(
             match_id=match_data["match_id"],

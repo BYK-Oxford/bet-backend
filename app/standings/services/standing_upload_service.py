@@ -1,5 +1,4 @@
 import pandas as pd
-import uuid
 from io import StringIO
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
@@ -37,7 +36,6 @@ class StandingsService:
 
             for _, row in df.iterrows():
                 standings_data = {
-                    "standing_id": str(uuid.uuid4()),
                     "league": league_name,
                     "season": season_year,
                     "team": row["team"],

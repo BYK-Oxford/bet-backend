@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.match_statistics.models.match_statistics_model import MatchStatistics
-import uuid
+from app.core.utils import generate_custom_id
 
 
 class MatchStatisticsService:
@@ -15,8 +15,9 @@ class MatchStatisticsService:
         if existing_stats:
             return existing_stats  # Prevent duplicate statistics
 
+        new_id = generate_custom_id(self.db, MatchStatistics, "MS", "match_stat_id")
         match_stats = MatchStatistics(
-            match_stat_id=str(uuid.uuid4()),
+            match_stat_id=new_id,
             match_id=match_id,
             full_time_home_goals=statistics_data.get("full_time_home_goals", 0),
             full_time_away_goals=statistics_data.get("full_time_away_goals", 0),

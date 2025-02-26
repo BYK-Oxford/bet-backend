@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.seasons.models import Season
-import uuid
+from app.core.utils import generate_custom_id
 from datetime import datetime
 
 class SeasonService:
@@ -19,8 +19,10 @@ class SeasonService:
         season = self.db.query(Season).filter(Season.season_year == formatted_season).first()
 
         if not season:
+            new_id = generate_custom_id(self.db, Season, "S", "season_id")
+
             season = Season(
-                season_id=str(uuid.uuid4()),
+                season_id=new_id,
                 season_year=formatted_season
             )
             self.db.add(season)

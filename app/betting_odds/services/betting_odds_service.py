@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.betting_odds.models import BettingOdds
 from app.matches.models import Match
+from app.core.utils import generate_custom_id
 
 class BettingOddsService:
     def __init__(self, db: Session):
@@ -12,9 +13,11 @@ class BettingOddsService:
 
         if not match:
             raise ValueError(f"Match ID {odds_data['match_id']} does not exist.")
+        # Generate a structured ID 
+        new_id = generate_custom_id(self.db, BettingOdds, "BO", "betting_oddds_id")
 
         odds = BettingOdds(
-            betting_oddds_id=odds_data["betting_oddds_id"],
+            betting_oddds_id=new_id,
             match_id=match.match_id,
 
             # Full-time result odds

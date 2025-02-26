@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.country.models.country_model import Country
-import uuid
+from app.core.utils import generate_custom_id
 
 class CountryService:
     def __init__(self, db: Session):
@@ -26,9 +26,12 @@ class CountryService:
         country = self.db.query(Country).filter(Country.country_name == country_name).first()
 
         if not country:
+            # Generate a structured ID like C1, C2, C10000
+            new_id = generate_custom_id(self.db, Country, "C", "country_id")
+
             # If the country doesn't exist, create and save it
             country = Country(
-                country_id=str(uuid.uuid4()),  # Generate unique country ID
+                country_id=new_id,  # Generate unique country ID
                 country_name=country_name      # Save the corresponding country name
             )
             self.db.add(country)
