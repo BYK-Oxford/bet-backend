@@ -1,11 +1,14 @@
 from oddsportal.oddsportal_scraper.oddsportal_scraper import get_page_content_selenium, parse_match_data
 from fishy.fishy_scraper.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
-from utils import save_to_csv, save_league_table_to_csv
-import re
+from app.new_odds.services.new_odds_service import NewOddsService
+from app.current_league.services.current_league_service import CurrentLeagueService
+
 
 class ScraperManager:
     def __init__(self, scraper_name):
         self.scraper_name = scraper_name
+        self.new_odds_service = NewOddsService()
+        self.current_league_service = CurrentLeagueService()
     
     def run_scraper(self, url):
         if self.scraper_name == 'oddsportal':
@@ -19,60 +22,40 @@ class ScraperManager:
         page_content = get_page_content_selenium(url)
         match_data = parse_match_data(page_content)
         
-        # Generate a dynamic filename based on the URL (e.g., using the league name)
-        filename = self._generate_filename_from_url(url)
-        
-        save_to_csv(match_data, scraper_name="oddsportal", filename=filename)
+        # Assuming match_data contains the required fields matching NewOdds model
+        for match in match_data:
+            new_odds_data = {
+                'new_odds_id': match['id'],  # Generate appropriate ID
+                'date': match['date'],
+                'time': match['time'],
+                'home_team_id': match['home_team_id'],
+                'away_team_id': match['away_team_id'],
+                'home_odds': match['home_odds'],
+                'draw_odds': match['draw_odds'],
+                'away_odds': match['away_odds']
+            }
+            self.new_odds_service.create_new_odds(new_odds_data)
     
-
-        
     def _run_fishy_scraper(self, url):
         page_content = get_fishy_page_content_selenium(url)
-        match_data = parse_fishy_league_standing_data(page_content)
+        league_data = parse_fishy_league_standing_data(page_content)
         
-        # Generate a dynamic filename based on the URL (e.g., using the league name)
-        filename = self._generate_filename_from_url(url)
-        
-        save_league_table_to_csv(match_data, scraper_name="fishy", filename=filename)
+        # Assuming league_data contains the required fields matching CurrentLeague model
+        for team_standing in league_data:
+            current_league_data = {
+                'current_league_id': team_standing['id'],  # Generate appropriate ID
+                'team_id': team_standing['team_id'],
+                'league_id': team_standing['league_id'],
+                'season_id': team_standing['season_id'],
+                'position': team_standing['position'],
+                'played': team_standing['played'],
+                'wins': team_standing['wins'],
+                'draws': team_standing['draws'],
+                'losses': team_standing['losses'],
+                'goals_for': team_standing['goals_for'],
+                'goals_against': team_standing['goals_against'],
+                'goal_difference': team_standing['goal_difference'],
+                'points': team_standing['points']
+            }
+            self.current_league_service.create_current_league(current_league_data)
 
-
-    def _generate_filename_from_url(self, url):
-        season_mapping = {
-            "21": "2023_2024",
-            "20": "2022_2023",
-            "19": "2021_2022",
-            "18": "2020_2021",
-            "17": "2019_2020",
-        }
-        
-        table_mapping = {
-            "1": "english_premier_league",
-            "2": "english_championship",
-            "10": "scottish_premier_league",
-            "11": "scottish_championship",
-        }
-
-        
-        if self.scraper_name == 'thefishy':
-            match = re.search(r'table=(\d+)&season=(\d+)', url)
-            if match:
-                table, season = match.groups()
-                league = table_mapping.get(table, f"unknown_league_{table}")
-                season_years = season_mapping.get(season, f"unknown_season_{season}")
-                return f"{league}_{season_years}.csv"
-            return "unknown_fishy_data.csv"
-    
-        elif self.scraper_name == 'oddsportal':
-            # Extract the country and league name from the URL
-            match = re.search(r'football/([^/]+)/([^/]+)/', url)
-            if match:
-                country, league = match.groups()
-                # Clean and format the filename
-                country = country.replace('-', '_')
-                league = league.replace('-', '_')
-                return f"{country}_{league}_matches.csv"
-        
-        # Default case for unknown scrapers
-        return "unknown_league_matches.csv"
-    
-  

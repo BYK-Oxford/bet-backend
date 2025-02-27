@@ -1,4 +1,3 @@
-import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
@@ -20,12 +19,15 @@ def get_page_content_selenium(url):
     return page_content
 
 def convert_fraction_to_decimal(fractional_odds):
-    try:
-        numerator, denominator = map(int, fractional_odds.split('/'))
-        decimal_odds = (numerator / denominator) + 1
-        return round(decimal_odds, 2)  # Round to 2 decimal places
-    except ValueError:
-        return 'N/A'  # Return 'N/A' if the odds are not in fractional form
+    # Check if the input contains '/' which indicates a fraction
+    if '/' in fractional_odds:
+        try:
+            numerator, denominator = map(int, fractional_odds.split('/'))
+            decimal_odds = (numerator / denominator) + 1
+            return round(decimal_odds, 2)  # Round to 2 decimal places
+        except ValueError:
+            return fractional_odds  # Return original value if conversion fails
+    return fractional_odds  # Return original value if not a fraction
 
 
 def parse_match_data(page_content):
