@@ -12,8 +12,8 @@ class NewOddsService:
         """Create or update new odds data in the database."""
         
         # Get or create teams using the team service
-        home_team = self.team_service.get_or_create_team(odds_data.get("home_team"))
-        away_team = self.team_service.get_or_create_team(odds_data.get("away_team"))
+        home_team = self.team_service.get_or_create_team(odds_data.get("home_team"), odds_data.get("league_code"))
+        away_team = self.team_service.get_or_create_team(odds_data.get("away_team"), odds_data.get("league_code"))
         
         # Check if odds already exist for this match (based on new_odds_id)
         existing_odds = self.db.query(NewOdds).filter_by(new_odds_id=odds_data['new_odds_id']).first()
