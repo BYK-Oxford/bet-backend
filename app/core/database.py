@@ -33,5 +33,7 @@ def init_db():
     from app.teams.models.team_alias_model import TeamAlias
     from app.seasons.models.seasons_model import Season
     from app.standings.models.standings_model import Standing
+    from app.current_league.models.current_league_model import CurrentLeague
+    from app.new_odds.models.new_odds_model import NewOdds
     
     Base.metadata.create_all(bind=engine)
