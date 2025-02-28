@@ -79,6 +79,7 @@ class ScraperManager:
         for team_standing in league_data:
             current_league_data = {
                 'team_id': team_standing['Team'],
+                'year': team_standing['Year'],
                 'position': team_standing['Position'],
                 'played': team_standing['Played'],
                 'wins': team_standing['Wins'],
@@ -90,4 +91,5 @@ class ScraperManager:
                 'points': team_standing['Points'],
                 'league_code': league_code  # Adding the league code
             }
+            print("Current league data:", current_league_data)
             self.current_league_service.create_current_league(current_league_data)

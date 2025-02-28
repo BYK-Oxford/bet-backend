@@ -20,6 +20,14 @@ def parse_fishy_league_standing_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')
     standings_data = []
     
+    # Extract year from caption and format it
+    caption = soup.find('caption')
+    if caption:
+        year_text = caption.text.strip().split()[0]  # Extract the first part (year)
+        formatted_year = year_text.replace('-', '/')  # Convert to yyyy/yyyy format
+    else:
+        formatted_year = "Unknown"
+    
     rows = soup.find_all('tr', class_='cats2')
     found_first_table = False  # To track if we have already processed a table
 
@@ -47,6 +55,7 @@ def parse_fishy_league_standing_data(page_content):
                 points = cols[19].text.strip()
 
                 standings_data.append({
+                    'Year': formatted_year,
                     'Position': position,
                     'Team': team_name,
                     'Played': played,
