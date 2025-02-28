@@ -18,9 +18,6 @@ class Team(Base):
     home_odds = relationship("NewOdds", foreign_keys="[NewOdds.home_team_id]", back_populates="home_team")
     away_odds = relationship("NewOdds", foreign_keys="[NewOdds.away_team_id]", back_populates="away_team")
 
-
-
-
     # Define reverse relationship for TeamAlias
     aliases = relationship("TeamAlias", back_populates="team")
 
