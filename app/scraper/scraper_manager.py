@@ -1,7 +1,8 @@
 from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_page_content_selenium, parse_match_data
-from app.scraper.fishy.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
+from app.scraper.fishy.fishy_scraper.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
+from app.teams.services.team_service import TeamService
 from sqlalchemy.orm import Session
 
 class ScraperManager:
@@ -9,6 +10,7 @@ class ScraperManager:
         self.scraper_name = scraper_name
         self.new_odds_service = NewOddsService(db)
         self.current_league_service = CurrentLeagueService(db)
+        self.team_service = TeamService(db)
         
         # Mapping URLs to league codes for OddsPortal
         self.oddsportal_league_mapping = {
@@ -35,7 +37,6 @@ class ScraperManager:
             raise ValueError("Unsupported scraper name")
     
     def _run_oddsportal_scraper(self, url):
-        # Get league code from the URL mapping for OddsPortal
         league_code = self.oddsportal_league_mapping.get(url)
         if not league_code:
             raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
@@ -43,18 +44,26 @@ class ScraperManager:
         page_content = get_page_content_selenium(url)
         match_data = parse_match_data(page_content)
         
-        # Assuming match_data contains the required fields matching NewOdds model
         for match in match_data:
+            # Get team objects using TeamService
+            home_team = self.team_service.get_or_create_team(match['Home Team'], league_code)
+            away_team = self.team_service.get_or_create_team(match['Away Team'], league_code)
+            
+            if not home_team or not away_team:
+                print(f"Warning: Could not find or create teams for {match['Home Team']} or {match['Away Team']}")
+                continue
+                
             new_odds_data = {
-                'date': match['date'],
-                'time': match['time'],
-                'home_team_id': match['home_team_id'],
-                'away_team_id': match['away_team_id'],
-                'home_odds': match['home_odds'],
-                'draw_odds': match['draw_odds'],
-                'away_odds': match['away_odds'],
-                'league_code': league_code  # Adding the league code
+                'date': match['Date'],
+                'time': match['Time'],
+                'home_team_id': home_team.team_id,  # Using the actual team ID from database
+                'away_team_id': away_team.team_id,  # Using the actual team ID from database
+                'home_odds': match['Home Odds'],
+                'draw_odds': match['Draw Odds'],
+                'away_odds': match['Away Odds'],
+                'league_code': league_code
             }
+            print("New odds data:", new_odds_data)
             self.new_odds_service.create_new_odds(new_odds_data)
     
     def _run_fishy_scraper(self, url):
@@ -69,18 +78,16 @@ class ScraperManager:
         # Assuming league_data contains the required fields matching CurrentLeague model
         for team_standing in league_data:
             current_league_data = {
-                'team_id': team_standing['team_id'],
-                'league_id': team_standing['league_id'],
-                'season_id': team_standing['season_id'],
-                'position': team_standing['position'],
-                'played': team_standing['played'],
-                'wins': team_standing['wins'],
-                'draws': team_standing['draws'],
-                'losses': team_standing['losses'],
-                'goals_for': team_standing['goals_for'],
-                'goals_against': team_standing['goals_against'],
-                'goal_difference': team_standing['goal_difference'],
-                'points': team_standing['points'],
+                'team_id': team_standing['Team'],
+                'position': team_standing['Position'],
+                'played': team_standing['Played'],
+                'wins': team_standing['Wins'],
+                'draws': team_standing['Draws'],
+                'losses': team_standing['Losses'],
+                'goals_for': team_standing['Goals For'],
+                'goals_against': team_standing['Goals Against'],
+                'goal_difference': team_standing['Goal Difference'],
+                'points': team_standing['Points'],
                 'league_code': league_code  # Adding the league code
             }
             self.current_league_service.create_current_league(current_league_data)

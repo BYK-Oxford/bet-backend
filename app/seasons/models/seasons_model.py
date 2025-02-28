@@ -10,3 +10,4 @@ class Season(Base):
 
     matches = relationship("Match", back_populates="season")
     standings = relationship("Standing", back_populates="season")
+    current_leagues = relationship("CurrentLeague", back_populates="season")

@@ -14,3 +14,4 @@ class League(Base):
     teams = relationship("Team", back_populates="league")
     matches = relationship("Match", back_populates="league")
     standings = relationship("Standing", back_populates="league")
+    current_leagues = relationship("CurrentLeague", back_populates="league")

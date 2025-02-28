@@ -4,6 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
+from datetime import datetime, timedelta
 
 
 # Function to fetch the page content using Selenium (for dynamic content)
@@ -32,6 +33,26 @@ def convert_fraction_to_decimal(fractional_odds):
             return fractional_odds  # Return original value if conversion fails
     return fractional_odds  # Return original value if not a fraction
 
+def convert_relative_date(date_str):
+    """Convert relative dates to proper date format."""
+    today = datetime.now()
+    
+    if date_str.startswith('Today'):
+        return today.strftime('%d %b %Y')
+    elif date_str.startswith('Tomorrow'):
+        tomorrow = today + timedelta(days=1)
+        return tomorrow.strftime('%d %b %Y')
+    else:
+        # For other dates, try to parse the date (e.g., "28 Feb")
+        try:
+            # Extract the date part after the comma if it exists
+            if ',' in date_str:
+                date_str = date_str.split(',')[1].strip()
+            # Add the current year since it's not in the string
+            date_str = f"{date_str} {today.year}"
+            return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
+        except ValueError:
+            return date_str
 
 def parse_match_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')
@@ -43,7 +64,8 @@ def parse_match_data(page_content):
         # Check if the element is a date header
         date_div = element.find('div', class_='text-black-main font-main w-full truncate text-xs font-normal leading-5')
         if date_div:
-            current_date = date_div.text.strip()
+            raw_date = date_div.text.strip()
+            current_date = convert_relative_date(raw_date)  # Convert the date format
             continue
 
         # Process match details

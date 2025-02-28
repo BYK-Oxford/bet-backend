@@ -20,6 +20,6 @@ class CurrentLeague(Base):
     goal_difference = Column(Integer, nullable=False)
     points = Column(Integer, nullable=False)
 
-    team = relationship("Team", back_populates="standings")
-    league = relationship("League", back_populates="standings")
-    season = relationship("Season", back_populates="standings")
+    team = relationship("Team", back_populates="current_league")
+    league = relationship("League", back_populates="current_leagues")
+    season = relationship("Season", back_populates="current_leagues")
