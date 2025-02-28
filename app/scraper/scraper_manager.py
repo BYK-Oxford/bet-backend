@@ -1,5 +1,5 @@
-from oddsportal.oddsportal_scraper.oddsportal_scraper import get_page_content_selenium, parse_match_data
-from fishy.fishy_scraper.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
+from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_page_content_selenium, parse_match_data
+from app.scraper.fishy.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
 from sqlalchemy.orm import Session

@@ -1,5 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import time
 
@@ -8,7 +10,8 @@ import time
 def get_page_content_selenium(url):
     options = Options()
     options.headless = True  # Run Chrome in headless mode (without UI)
-    driver = webdriver.Chrome(options=options)
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=options)
 
     driver.get(url)
     time.sleep(5)  # Wait for the page to load (adjust this sleep if needed)
