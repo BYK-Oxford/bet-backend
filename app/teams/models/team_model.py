@@ -24,3 +24,6 @@ class Team(Base):
     # Define reverse relationship for Standing
     standings = relationship("Standing", back_populates="team")
     current_league = relationship("CurrentLeague", back_populates="team")
+
+    home_calculated_odds = relationship("OddsCalculation", foreign_keys="[OddsCalculation.home_team_id]", back_populates="home_team")
+    away_calculated_odds = relationship("OddsCalculation", foreign_keys="[OddsCalculation.away_team_id]", back_populates="away_team")

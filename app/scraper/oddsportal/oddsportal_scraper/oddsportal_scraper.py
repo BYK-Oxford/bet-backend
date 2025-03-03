@@ -43,14 +43,19 @@ def convert_relative_date(date_str):
         tomorrow = today + timedelta(days=1)
         return tomorrow.strftime('%d %b %Y')
     else:
-        # For other dates, try to parse the date (e.g., "28 Feb")
+        # For other dates, try to parse the date
         try:
             # Extract the date part after the comma if it exists
             if ',' in date_str:
                 date_str = date_str.split(',')[1].strip()
-            # Add the current year since it's not in the string
-            date_str = f"{date_str} {today.year}"
-            return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
+            
+            # First try to parse with year if it's included
+            try:
+                return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
+            except ValueError:
+                # If no year in the string, add the current year
+                date_str = f"{date_str} {today.year}"
+                return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
         except ValueError:
             return date_str
 

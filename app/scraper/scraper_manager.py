@@ -92,4 +92,4 @@ class ScraperManager:
                 'league_code': league_code  # Adding the league code
             }
             print("Current league data:", current_league_data)
-            self.current_league_service.create_current_league(current_league_data)
+            self.current_league_service.create_or_update_current_league(current_league_data)
