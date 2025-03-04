@@ -42,7 +42,7 @@ class ScraperManager:
             raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
         
         page_content = get_page_content_selenium(url)
-        match_data = parse_match_data(page_content)
+        match_data = parse_match_data(page_content, url)
         
         for match in match_data:
             # Get team objects using TeamService

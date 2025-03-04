@@ -59,7 +59,13 @@ def convert_relative_date(date_str):
         except ValueError:
             return date_str
 
-def parse_match_data(page_content):
+def parse_match_data(page_content, url):
+    # Extract country and league from URL
+    # URL format: "https://www.oddsportal.com/football/country/league-name/"
+    url_parts = url.strip('/').split('/')
+    country = url_parts[-2].capitalize()
+    league = url_parts[-1].replace('-', ' ').title()
+    
     soup = BeautifulSoup(page_content, 'html.parser')
     match_data = []
     current_date = None
@@ -102,7 +108,9 @@ def parse_match_data(page_content):
                     'Away Team': away_team,
                     'Home Odds': home_odds,
                     'Draw Odds': draw_odds,
-                    'Away Odds': away_odds
+                    'Away Odds': away_odds,
+                    'Country': country,
+                    'Division': league
                 })
 
     return match_data
