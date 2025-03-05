@@ -23,9 +23,6 @@ class OddsCalculationService:
             calculated_ratios_list.append(calculated_ratios)
         return calculated_ratios_list
 
-
-
-
     async def calculate_ratios(self, home_team_id: str, away_team_id: str, season_id: str):
         """Calculate win, draw, and loss ratios for a single match."""
         season = self.db.query(Season).filter(Season.season_id == season_id).first()
@@ -41,7 +38,6 @@ class OddsCalculationService:
         away_performance = await self.get_team_season_performance(away_team_id, season_id)
         head_to_head = await self.get_head_to_head_record(home_team_id, away_team_id)
 
-        # Get team names by ID
         home_team = self.db.query(Team).filter(Team.team_id == home_team_id).first()
         away_team = self.db.query(Team).filter(Team.team_id == away_team_id).first()
 
@@ -61,10 +57,6 @@ class OddsCalculationService:
             "head_to_head": head_to_head
         }
 
-
-
-
-
     def get_previous_season_year(self, season_year: str) -> str:
         """Get the previous season year given the current season year."""
         if season_year:
@@ -72,6 +64,7 @@ class OddsCalculationService:
             return f"{start_year - 1}/{end_year - 1}"
         return None
 
+    
     async def get_team_season_performance(self, team_id: str, season_id: str):
         """Fetch the performance of a team for a given season."""
         if not season_id:
@@ -88,7 +81,10 @@ class OddsCalculationService:
         ).first()
 
         if not current_season and not last_season:
-            return {"wins": "0", "draws": "0", "losses": "0"}
+            return {
+                "wins": "0/0", "draws": "0/0", "losses": "0/0",
+                "wins_ratio": "0/0", "draws_ratio": "0/0", "losses_ratio": "0/0"
+            }
 
         played = current_season.played if current_season else last_season.played
         wins = current_season.wins if current_season else last_season.wins
@@ -96,11 +92,15 @@ class OddsCalculationService:
         losses = current_season.losses if current_season else last_season.losses
 
         return {
-            "wins": str(wins),
-            "draws": str(draws),
-            "losses": str(losses),
-            "total_played": str(played)
+            "wins": f"{wins}",
+            "draws": f"{draws}",
+            "losses": f"{losses}",
+            "total_played": f"{played}",
+            "wins_ratio": f"{wins}/{played}",
+            "draws_ratio": f"{draws}/{played}",
+            "losses_ratio": f"{losses}/{played}"
         }
+
     
     async def get_head_to_head_record(self, home_team_id: str, away_team_id: str):
         """Fetch and calculate the head-to-head record between two teams."""
@@ -110,9 +110,11 @@ class OddsCalculationService:
         ).scalar()
 
         if total_matches == 0:
-            return {"home_wins": "0", "away_wins": "0", "draws": "0"}
+            return {
+                "home_wins": "0/0", "away_wins": "0/0", "draws": "0/0",
+                "home_win_ratio": "0/0", "away_win_ratio": "0/0", "draw_ratio": "0/0"
+            }
 
-        # Explicitly specify the base table for joins and the ON clause
         home_wins = self.db.query(func.count()).select_from(Match).join(
             MatchStatistics, Match.match_id == MatchStatistics.match_id
         ).filter(
@@ -138,8 +140,11 @@ class OddsCalculationService:
         ).scalar()
 
         return {
-            "home_wins": str(home_wins),
-            "away_wins": str(away_wins),
-            "draws": str(draws),
-            "total_matches": str(total_matches)
-        }
+            "home_wins": f"{home_wins}",
+            "away_wins": f"{away_wins}",
+            "draws": f"{draws}",
+            "total_matches": f"{total_matches}",
+            "home_win_ratio": f"{home_wins}/{total_matches}",
+            "away_win_ratio": f"{away_wins}/{total_matches}",
+            "draw_ratio": f"{draws}/{total_matches}"
+    }

@@ -3,7 +3,6 @@ from app.new_odds.models.new_odds_model import NewOdds
 from app.core.utils import generate_custom_id
 from app.seasons.services.season_service import SeasonService
 from datetime import datetime
-from rapidfuzz import fuzz, process
 from app.leagues.services.league_service import LeagueService
 from app.leagues.models.leagues_models import League
 
@@ -17,27 +16,12 @@ class NewOddsService:
         """Fetches all upcoming matches based on system date and time."""
         return self.db.query(NewOdds).filter(NewOdds.date > current_time.date()).all()
 
-    def _find_matching_league(self, country: str, division: str) -> str:
-        """Find the matching league using fuzzy matching."""
-        # Get all leagues from the database
-        all_leagues = self.db.query(League).all()
-        league_names = [league.league_name for league in all_leagues]
-        
-        # Create a combined search string (e.g., "England Premier League")
-        search_term = f"{country} {division}"
-        
-        # Find the best match using rapidfuzz
-        best_match = process.extractOne(
-            search_term,
-            league_names,
-            scorer=fuzz.token_sort_ratio,
-            score_cutoff=80  # Minimum similarity score threshold
-        )
-        
-        if best_match:
-            matched_name = best_match[0]
-            return self.db.query(League).filter(League.league_name == matched_name).first()
-        return None
+    def _find_matching_league(self, league_code: str) -> League:
+        """Find the matching league using league_code."""
+        league = self.db.query(League).filter(League.league_code == league_code).first()
+        if not league:
+            raise ValueError(f"Could not find matching league for code: {league_code}")
+        return league
 
     def create_new_odds(self, odds_data: dict):
         """Create or update new odds data in the database."""
@@ -61,10 +45,8 @@ class NewOddsService:
         # Get or create season
         season = self.season_service.get_or_create_season(formatted_date)
         
-        # Find matching league using fuzzy matching
-        league = self._find_matching_league(odds_data['Country'], odds_data['Division'])
-        if not league:
-            raise ValueError(f"Could not find matching league for {odds_data['Country']} {odds_data['Division']}")
+        # Find matching league using league_code
+        league = self._find_matching_league(odds_data['league_code'])
         
         # Check if odds already exist for this match
         existing_odds = self.db.query(NewOdds).filter_by(
