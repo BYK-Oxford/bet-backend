@@ -64,6 +64,7 @@ class OddsCalculationService:
             return f"{start_year - 1}/{end_year - 1}"
         return None
 
+
     async def get_team_data(self, team_id: str, season_id: str, last_season_id: str, is_home: bool):
         """Retrieve team data including current and previous season performance."""
         team = self.db.query(Team).filter(Team.team_id == team_id).first()
@@ -108,11 +109,16 @@ class OddsCalculationService:
         }
 
 
+
+
+
+
     async def get_head_to_head_record(self, home_team_id: str, away_team_id: str):
         """Fetch and calculate the head-to-head record between two teams."""
+        
+        # Count the total matches where home_team_id is home and away_team_id is away
         total_matches = self.db.query(func.count()).filter(
-            ((Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id)) |
-            ((Match.home_team_id == away_team_id) & (Match.away_team_id == home_team_id))
+            (Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id)
         ).scalar()
 
         if total_matches == 0:
@@ -121,6 +127,7 @@ class OddsCalculationService:
                 "home_win_ratio": 0.0, "away_win_ratio": 0.0, "draw_ratio": 0.0
             }
 
+        # Count home wins
         home_wins = self.db.query(func.count()).select_from(Match).join(
             MatchStatistics, Match.match_id == MatchStatistics.match_id
         ).filter(
@@ -129,19 +136,20 @@ class OddsCalculationService:
             MatchStatistics.full_time_result == "H"
         ).scalar()
 
+        # Count away wins
         away_wins = self.db.query(func.count()).select_from(Match).join(
             MatchStatistics, Match.match_id == MatchStatistics.match_id
         ).filter(
-            Match.home_team_id == away_team_id,
-            Match.away_team_id == home_team_id,
+            Match.home_team_id == home_team_id,
+            Match.away_team_id == away_team_id,
             MatchStatistics.full_time_result == "A"
         ).scalar()
 
+        # Count draws
         draws = self.db.query(func.count()).select_from(Match).join(
             MatchStatistics, Match.match_id == MatchStatistics.match_id
         ).filter(
-            ((Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id)) |
-            ((Match.home_team_id == away_team_id) & (Match.away_team_id == home_team_id)),
+            (Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id) ,
             MatchStatistics.full_time_result == "D"
         ).scalar()
 
