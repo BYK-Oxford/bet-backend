@@ -29,8 +29,9 @@ class OddsCalculationService:
 
         # Gather data for head-to-head, current season, and last season
         head_to_head = await self.get_head_to_head_record(home_team_id, away_team_id)
-        home_team_data = await self.get_team_data(home_team_id, season_id, last_season_id)
-        away_team_data = await self.get_team_data(away_team_id, season_id, last_season_id)
+        home_team_data = await self.get_team_data(home_team_id, season_id, last_season_id, is_home=True)
+        away_team_data = await self.get_team_data(away_team_id, season_id, last_season_id, is_home=False)
+
         
         # Calculate weighted draw for home and away teams
         weighted_draw_home = await self.calculate_weighted_draw_ratio(home_team_data["current_season"], home_team_data["last_season"])
@@ -39,12 +40,22 @@ class OddsCalculationService:
         # Final draw chance calculation
         draw_chance = self.calculate_draw_chance(head_to_head['draw_ratio'], weighted_draw_home, weighted_draw_away)
 
+        # Calculate final home win ratio
+        final_home_win_ratio = self.calculate_final_home_win_ratio(
+            home_team_data.get("weighted_home_win_ratio", 0.0),
+            away_team_data.get("weighted_away_loss_ratio", 0.0),
+            head_to_head.get("home_win_ratio", 0.0)
+        )
+
         return {
             "home_team": home_team_data,
             "away_team": away_team_data,
             "head_to_head": head_to_head,
-            "draw_chance": draw_chance
+            "draw_chance": draw_chance,
+            "final_home_win_ratio": final_home_win_ratio,
+            "final_away_win_ratio": 1-(final_home_win_ratio+draw_chance),
         }
+        
 
     def get_previous_season_year(self, season_year: str) -> str:
         """Get the previous season year given the current season year."""
@@ -53,17 +64,27 @@ class OddsCalculationService:
             return f"{start_year - 1}/{end_year - 1}"
         return None
 
-    async def get_team_data(self, team_id: str, season_id: str, last_season_id: str):
+    async def get_team_data(self, team_id: str, season_id: str, last_season_id: str, is_home: bool):
         """Retrieve team data including current and previous season performance."""
+        team = self.db.query(Team).filter(Team.team_id == team_id).first()
+
         current_performance = await self.get_team_season_performance(team_id, season_id)
         last_performance = await self.get_team_season_performance(team_id, last_season_id) if last_season_id else None
 
-        return {
+        team_data = {
             "team_id": team_id,
+            "team_name": team.team_name,
             "current_season": current_performance,
             "last_season": last_performance,
-            "weighted_draw_ratio": await self.calculate_weighted_draw_ratio(current_performance, last_performance)
         }
+
+        if is_home:
+            team_data["weighted_home_win_ratio"] = await self.calculate_weighted_home_win_ratio(current_performance, last_performance)
+        else:
+            team_data["weighted_away_loss_ratio"] = await self.calculate_weighted_away_loss_ratio(current_performance, last_performance)
+
+        return team_data
+
 
     async def get_team_season_performance(self, team_id: str, season_id: str):
         """Fetch the performance of a team for a given season."""
@@ -135,6 +156,44 @@ class OddsCalculationService:
         }
 
 
+    async def calculate_weighted_home_win_ratio(self, current_performance, last_performance):
+        if not current_performance:
+            return 0.0
+
+        last_performance = last_performance or {"wins_ratio": 0.0, "total_played": 0}
+        total_matches_played = current_performance["total_played"] + last_performance["total_played"]
+
+        if total_matches_played == 0:
+            return 0.0
+
+        weighted_home_win_ratio = (
+            (current_performance["wins_ratio"] * current_performance["total_played"]) +
+            (last_performance["wins_ratio"] * last_performance["total_played"])
+        ) / total_matches_played
+
+        return round(weighted_home_win_ratio, 8)
+
+
+
+    async def calculate_weighted_away_loss_ratio(self, current_performance, last_performance):
+        """Calculate the weighted away loss ratio based on home team's wins."""
+        if not current_performance:
+            return 0.0
+
+        last_performance = last_performance or {"losses_ratio": 0.0, "total_played": 0}
+        total_matches_played = current_performance["total_played"] + last_performance["total_played"]
+
+        if total_matches_played == 0:
+            return 0.0
+
+        weighted_away_loss_ratio = (
+            (current_performance["losses_ratio"] * current_performance["total_played"]) +
+            (last_performance["losses_ratio"] * last_performance["total_played"])
+        ) / total_matches_played
+
+        return round(weighted_away_loss_ratio, 8)
+
+
 
     async def calculate_weighted_draw_ratio(self, current_performance, last_performance):
         """Calculate the weighted draw ratio for a team across two seasons."""
@@ -159,3 +218,9 @@ class OddsCalculationService:
     def calculate_draw_chance(self, head_to_head_draw_ratio, home_weighted_draw_ratio, away_weighted_draw_ratio):
         """Calculate the final draw chance."""
         return round((head_to_head_draw_ratio + home_weighted_draw_ratio + away_weighted_draw_ratio) / 3, 8)
+
+
+
+    def calculate_final_home_win_ratio(self, weighted_home_win_ratio, weighted_away_loss_ratio, head_to_head_home_win_ratio):
+        """Calculate the final home win ratio."""
+        return round((weighted_home_win_ratio + weighted_away_loss_ratio + head_to_head_home_win_ratio) / 3, 8)
