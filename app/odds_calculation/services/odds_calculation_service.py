@@ -32,30 +32,31 @@ class OddsCalculationService:
         home_team_data = await self.get_team_data(home_team_id, season_id, last_season_id, is_home=True)
         away_team_data = await self.get_team_data(away_team_id, season_id, last_season_id, is_home=False)
 
-        
         # Calculate weighted draw for home and away teams
         weighted_draw_home = await self.calculate_weighted_draw_ratio(home_team_data["current_season"], home_team_data["last_season"])
         weighted_draw_away = await self.calculate_weighted_draw_ratio(away_team_data["current_season"], away_team_data["last_season"])
 
         # Final draw chance calculation
-        draw_chance = self.calculate_draw_chance(head_to_head['draw_ratio'], weighted_draw_home, weighted_draw_away)
+        draw_chance = self.calculate_draw_chance(head_to_head['draw_ratio'], weighted_draw_home, weighted_draw_away, head_to_head['total_matches'])
 
         # Calculate final home win ratio
         final_home_win_ratio = self.calculate_final_home_win_ratio(
             home_team_data.get("weighted_home_win_ratio", 0.0),
             away_team_data.get("weighted_away_loss_ratio", 0.0),
-            head_to_head.get("home_win_ratio", 0.0)
+            head_to_head.get("home_win_ratio", 0.0),
+            head_to_head['total_matches']
         )
 
         return {
             "home_team": home_team_data,
             "away_team": away_team_data,
             "head_to_head": head_to_head,
-            "draw_chance": draw_chance,
-            "final_home_win_ratio": final_home_win_ratio,
-            "final_away_win_ratio": 1-(final_home_win_ratio+draw_chance),
-        }
-        
+            "final_draw_chance": round(draw_chance, 2),
+            "weighted home draw": weighted_draw_home,
+            "weighted away draw": weighted_draw_away,
+            "final_home_win_ratio": round(final_home_win_ratio, 2),
+            "final_away_win_ratio": round(1 - (final_home_win_ratio + draw_chance),2),
+        }    
 
     def get_previous_season_year(self, season_year: str) -> str:
         """Get the previous season year given the current season year."""
@@ -109,10 +110,6 @@ class OddsCalculationService:
         }
 
 
-
-
-
-
     async def get_head_to_head_record(self, home_team_id: str, away_team_id: str):
         """Fetch and calculate the head-to-head record between two teams."""
         
@@ -124,7 +121,8 @@ class OddsCalculationService:
         if total_matches == 0:
             return {
                 "home_wins": 0, "away_wins": 0, "draws": 0,
-                "home_win_ratio": 0.0, "away_win_ratio": 0.0, "draw_ratio": 0.0
+                "home_win_ratio": 0.0, "away_win_ratio": 0.0, "draw_ratio": 0.0,
+                "total_matches": 0 
             }
 
         # Count home wins
@@ -179,8 +177,7 @@ class OddsCalculationService:
             (last_performance["wins_ratio"] * last_performance["total_played"])
         ) / total_matches_played
 
-        return round(weighted_home_win_ratio, 8)
-
+        return weighted_home_win_ratio
 
 
     async def calculate_weighted_away_loss_ratio(self, current_performance, last_performance):
@@ -199,8 +196,7 @@ class OddsCalculationService:
             (last_performance["losses_ratio"] * last_performance["total_played"])
         ) / total_matches_played
 
-        return round(weighted_away_loss_ratio, 8)
-
+        return weighted_away_loss_ratio
 
 
     async def calculate_weighted_draw_ratio(self, current_performance, last_performance):
@@ -219,16 +215,18 @@ class OddsCalculationService:
             (last_performance["draws_ratio"] * last_performance["total_played"]) 
         ) / total_matches_played
 
-        return round(weighted_draw_ratio, 8)
+        return weighted_draw_ratio
 
 
-
-    def calculate_draw_chance(self, head_to_head_draw_ratio, home_weighted_draw_ratio, away_weighted_draw_ratio):
+    def calculate_draw_chance(self, head_to_head_draw_ratio, home_weighted_draw_ratio, away_weighted_draw_ratio, head_to_head_total_matches):
         """Calculate the final draw chance."""
-        return round((head_to_head_draw_ratio + home_weighted_draw_ratio + away_weighted_draw_ratio) / 3, 8)
+        if head_to_head_total_matches == 0:
+            return (home_weighted_draw_ratio + away_weighted_draw_ratio) / 2
+        return (head_to_head_draw_ratio + home_weighted_draw_ratio + away_weighted_draw_ratio) / 3
 
 
-
-    def calculate_final_home_win_ratio(self, weighted_home_win_ratio, weighted_away_loss_ratio, head_to_head_home_win_ratio):
+    def calculate_final_home_win_ratio(self, weighted_home_win_ratio, weighted_away_loss_ratio, head_to_head_home_win_ratio, head_to_head_total_matches):
         """Calculate the final home win ratio."""
-        return round((weighted_home_win_ratio + weighted_away_loss_ratio + head_to_head_home_win_ratio) / 3, 8)
+        if head_to_head_total_matches == 0:
+            return (weighted_home_win_ratio + weighted_away_loss_ratio) / 2
+        return (weighted_home_win_ratio + weighted_away_loss_ratio + head_to_head_home_win_ratio) / 3
