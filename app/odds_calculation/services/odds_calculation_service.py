@@ -6,17 +6,33 @@ from app.seasons.models.seasons_model import Season
 from app.standings.models.standings_model import Standing
 from app.current_league.models.current_league_model import CurrentLeague
 from app.teams.models.team_model import Team
+from app.odds_calculation.services.odds_saving_service import OddsSavingService
+
 
 class OddsCalculationService:
     def __init__(self, db: Session):
         self.db = db
+        self.odds_saving_service = OddsSavingService(db)
 
     async def calculate_ratios_for_matches(self, new_matches):
-        """Calculate win, draw, and loss ratios for a list of matches."""
-        return [
-            await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
-            for match in new_matches
-        ]
+        """Calculate win, draw, and loss ratios for a list of matches and save them."""
+        results = []
+
+        for match in new_matches:
+            odds_data = await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
+
+            if odds_data:  # Ensure the calculation is valid before saving
+                saved_entry = self.odds_saving_service.save_calculated_odds(
+                    date=match.date,
+                    time=match.time,
+                    home_team_id=match.home_team_id, 
+                    away_team_id=match.away_team_id, 
+                    odds_data=odds_data
+                )
+                results.append(saved_entry)  # Append each saved entry
+
+        return results
+
 
     async def calculate_ratios(self, home_team_id: str, away_team_id: str, season_id: str):
         """Calculate win, draw, and loss ratios for a single match."""
