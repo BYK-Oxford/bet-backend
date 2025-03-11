@@ -19,27 +19,29 @@ class OddsSavingService:
         ).first()
 
         if existing_entry:
-            # Update existing entry
             existing_entry.calculated_home_odds = odds_data.get("final_home_win_ratio")
             existing_entry.calculated_draw_odds = odds_data.get("final_draw_chance")
             existing_entry.calculated_away_odds = odds_data.get("final_away_win_ratio")
-        else:
-            # Generate a custom ID for the new odds
-            new_id = generate_custom_id(self.db, OddsCalculation, "OC", "odds_calculation_id")
-            print(f"Generated ID: {new_id}")
-            # Insert new entry
-            existing_entry = OddsCalculation(
-                odds_calculation_id=new_id,
-                date=date,
-                time=time,
-                home_team_id=home_team_id,
-                away_team_id=away_team_id,
-                calculated_home_odds=odds_data.get("final_home_win_ratio"),
-                calculated_draw_odds=odds_data.get("final_draw_chance"),
-                calculated_away_odds=odds_data.get("final_away_win_ratio"),
-            )
-            self.db.add(existing_entry)
-
+            self.db.commit()
+            self.db.refresh(existing_entry)
+            return existing_entry
+        
+        new_id = generate_custom_id(self.db, OddsCalculation, "OC", "odds_calculation_id")
+        print(f"Generated ID: {new_id}")
+        
+        new_entry = OddsCalculation(
+            odds_calculation_id=new_id,
+            date=date,
+            time=time,
+            home_team_id=home_team_id,
+            away_team_id=away_team_id,
+            calculated_home_odds=odds_data.get("final_home_win_ratio"),
+            calculated_draw_odds=odds_data.get("final_draw_chance"),
+            calculated_away_odds=odds_data.get("final_away_win_ratio"),
+        )
+        self.db.add(new_entry)
         self.db.commit()
-        self.db.refresh(existing_entry)
-        return existing_entry
+        self.db.refresh(new_entry)
+        return new_entry  # Return new_entry instead of existing_entry
+
+     

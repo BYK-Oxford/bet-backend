@@ -27,7 +27,8 @@ async def calculate_ratios(db: Session = Depends(get_db)):
         # Perform ratio calculations
         calculated_ratios_list = await odds_service.calculate_ratios_for_matches(new_matches)
 
-        return {"calculated_ratios": calculated_ratios_list}
+        # return {"calculated_ratios": calculated_ratios_list}
+        return {"message": "All odds calculations done for upcoming matches  !!!"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
