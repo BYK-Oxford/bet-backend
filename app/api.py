@@ -8,7 +8,16 @@ from app.odds_calculation.controllers.odds_calculation_controller import router 
 api_router = APIRouter()
 
 api_router.include_router(upload_match_router, prefix="/match", tags=["match"])
+
+
 api_router.include_router(upload_standing_router, prefix="/standing", tags=["standing"])
+
+
 api_router.include_router(current_league_router, prefix="/current-league", tags=["current-league"])
+
+
 api_router.include_router(new_odds_router, prefix="/odds", tags=["odds"])
+
+
+
 api_router.include_router(odds_calculation_router, prefix="/odds-calculation", tags=["odds-calculation"])

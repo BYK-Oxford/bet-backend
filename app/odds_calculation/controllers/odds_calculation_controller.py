@@ -3,9 +3,32 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.odds_calculation.services.odds_calculation_service import OddsCalculationService
 from app.new_odds.services.new_odds_service import NewOddsService
+from app.odds_calculation.services.odds_retrieval_service import OddsRetrievalService
 from datetime import datetime
 
 router = APIRouter()
+
+
+
+@router.get("/calculated-odds/")
+def get_all_calculated_odds(db: Session = Depends(get_db)):
+    """
+    Retrieve all calculated odds from the database.
+    """
+    try:
+        odds_service = OddsRetrievalService(db)
+        calculated_odds = odds_service.get_all_calculated_odds()
+
+        if not calculated_odds:
+            return {"message": "No calculated odds found."}
+
+        return {"calculated_odds": calculated_odds}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 
 @router.post("/calculate-ratios/")
 async def calculate_ratios(db: Session = Depends(get_db)):
