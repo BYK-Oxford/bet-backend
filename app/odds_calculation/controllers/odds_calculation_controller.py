@@ -27,9 +27,6 @@ def get_all_calculated_odds(db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-
 @router.post("/calculate-ratios/")
 async def calculate_ratios(db: Session = Depends(get_db)):
     """
