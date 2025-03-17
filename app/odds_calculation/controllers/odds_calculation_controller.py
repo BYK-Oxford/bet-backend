@@ -8,8 +8,6 @@ from datetime import datetime
 
 router = APIRouter()
 
-
-
 @router.get("/calculated-odds/")
 def get_all_calculated_odds(db: Session = Depends(get_db)):
     """
