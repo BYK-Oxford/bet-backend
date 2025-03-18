@@ -189,8 +189,8 @@ class OddsCalculationService:
             return 0.0
 
         weighted_home_win_ratio = (
-            (current_performance["wins_ratio"] * current_performance["total_played"]) +
-            (last_performance["wins_ratio"] * last_performance["total_played"])
+            ((current_performance["wins_ratio"] * current_performance["total_played"])*1.25) +
+            ((last_performance["wins_ratio"] * last_performance["total_played"])/1.25)
         ) / total_matches_played
 
         return weighted_home_win_ratio
@@ -208,8 +208,8 @@ class OddsCalculationService:
             return 0.0
 
         weighted_away_loss_ratio = (
-            (current_performance["losses_ratio"] * current_performance["total_played"]) +
-            (last_performance["losses_ratio"] * last_performance["total_played"])
+            ((current_performance["losses_ratio"] * current_performance["total_played"])*1.25)+
+            ((last_performance["losses_ratio"] * last_performance["total_played"])/1.25)
         ) / total_matches_played
 
         return weighted_away_loss_ratio
@@ -245,4 +245,4 @@ class OddsCalculationService:
         """Calculate the final home win ratio."""
         if head_to_head_total_matches == 0:
             return (weighted_home_win_ratio + weighted_away_loss_ratio) / 2
-        return (weighted_home_win_ratio + weighted_away_loss_ratio + head_to_head_home_win_ratio) / 3
+        return (weighted_home_win_ratio + weighted_away_loss_ratio + (head_to_head_home_win_ratio*1.25)) / 3
