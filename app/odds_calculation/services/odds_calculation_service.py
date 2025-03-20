@@ -233,9 +233,6 @@ class OddsCalculationService:
 
         return weighted_draw_ratio
 
-
-
-
     def calculate_draw_chance(self, head_to_head_draw_ratio, home_weighted_draw_ratio, away_weighted_draw_ratio, head_to_head_total_matches):
         """Calculate the final draw chance."""
         if head_to_head_total_matches == 0:
