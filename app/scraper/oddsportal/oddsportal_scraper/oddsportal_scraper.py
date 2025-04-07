@@ -13,7 +13,7 @@ def get_page_content_selenium(url):
     options.headless = True  # Run Chrome in headless mode (without UI)
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
-
+    driver.maximize_window() 
     driver.get(url)
     time.sleep(5)  # Wait for the page to load (adjust this sleep if needed)
 
@@ -23,7 +23,7 @@ def get_page_content_selenium(url):
     return page_content
 
 def convert_fraction_to_decimal(fractional_odds):
-    # Check if the input contains '/' which indicates a fraction
+    """Convert fractional odds to decimal."""
     if '/' in fractional_odds:
         try:
             numerator, denominator = map(int, fractional_odds.split('/'))
@@ -32,6 +32,47 @@ def convert_fraction_to_decimal(fractional_odds):
         except ValueError:
             return fractional_odds  # Return original value if conversion fails
     return fractional_odds  # Return original value if not a fraction
+
+def convert_moneyline_to_decimal(moneyline_odds):
+    """Convert Money Line odds to decimal."""
+    try:
+        moneyline_odds = int(moneyline_odds)
+        if moneyline_odds > 0:
+            return round((moneyline_odds / 100) + 1, 2)  # Positive moneyline odds
+        elif moneyline_odds < 0:
+            return round((100 / abs(moneyline_odds)) + 1, 2)  # Negative moneyline odds
+    except ValueError:
+        return moneyline_odds  # Return original value if conversion fails
+
+def convert_hongkong_to_decimal(hongkong_odds):
+    """Convert Hong Kong odds to decimal."""
+    try:
+        hongkong_odds = float(hongkong_odds)
+        return round(hongkong_odds + 1, 2)  # Hong Kong odds add 1
+    except ValueError:
+        return hongkong_odds
+
+def convert_malay_to_decimal(malay_odds):
+    """Convert Malay odds to decimal."""
+    try:
+        malay_odds = float(malay_odds)
+        if malay_odds > 0:
+            return round(malay_odds + 1, 2)
+        elif malay_odds < 0:
+            return round(1 / abs(malay_odds), 2)
+    except ValueError:
+        return malay_odds
+
+def convert_indonesian_to_decimal(indonesian_odds):
+    """Convert Indonesian odds to decimal."""
+    try:
+        indonesian_odds = float(indonesian_odds)
+        if indonesian_odds > 0:
+            return round(indonesian_odds + 1, 2)
+        elif indonesian_odds < 0:
+            return round(1 / abs(indonesian_odds), 2)
+    except ValueError:
+        return indonesian_odds
 
 def convert_relative_date(date_str):
     """Convert relative dates to proper date format."""
@@ -65,6 +106,24 @@ def parse_match_data(page_content):
     current_date = None
     seen_matches = set()  # Track seen matches to avoid duplicates
 
+    # Extract the odds type (only need to do this once per page)
+    odds_type_tag = soup.find('p', class_='text-orange-main self-center text-xs')
+    odds_type = None
+    if odds_type_tag:
+        odds_type_text = odds_type_tag.text.strip()
+        if 'Money Line Odds' in odds_type_text:
+            odds_type = 'Money Line Odds'
+        elif 'Decimal Odds' in odds_type_text:
+            odds_type = 'Decimal Odds'
+        elif 'Fractional Odds' in odds_type_text:
+            odds_type = 'Fractional Odds'
+        elif 'Hong Kong Odds' in odds_type_text:
+            odds_type = 'Hong Kong Odds'
+        elif 'Malay Odds' in odds_type_text:
+            odds_type = 'Malay Odds'
+        elif 'Indonesian Odds' in odds_type_text:
+            odds_type = 'Indonesian Odds'
+
     for element in soup.find_all('div', class_=['border-black-borders', 'flex', 'w-full', 'min-w-0']):
         # Check if the element is a date header
         date_div = element.find('div', class_='text-black-main font-main w-full truncate text-xs font-normal leading-5')
@@ -82,12 +141,36 @@ def parse_match_data(page_content):
 
             odds_divs = match.find_all('p', class_='height-content')
             home_odds, draw_odds, away_odds = 'N/A', 'N/A', 'N/A'
-            if len(odds_divs) == 3:
-                 # Extract fractional odds and convert to decimal
-                home_odds = convert_fraction_to_decimal(odds_divs[0].text.strip())
-                draw_odds = convert_fraction_to_decimal(odds_divs[1].text.strip())
-                away_odds = convert_fraction_to_decimal(odds_divs[2].text.strip())
 
+            if len(odds_divs) == 3:
+                home_odds = odds_divs[0].text.strip()
+                draw_odds = odds_divs[1].text.strip()
+                away_odds = odds_divs[2].text.strip()
+
+                # Convert odds based on the detected odds type
+                if odds_type == 'Fractional Odds':
+                    home_odds = convert_fraction_to_decimal(home_odds)
+                    draw_odds = convert_fraction_to_decimal(draw_odds)
+                    away_odds = convert_fraction_to_decimal(away_odds)
+                elif odds_type == 'Money Line Odds':
+                    home_odds = convert_moneyline_to_decimal(home_odds)
+                    draw_odds = convert_moneyline_to_decimal(draw_odds)
+                    away_odds = convert_moneyline_to_decimal(away_odds)
+                elif odds_type == 'Hong Kong Odds':
+                    home_odds = convert_hongkong_to_decimal(home_odds)
+                    draw_odds = convert_hongkong_to_decimal(draw_odds)
+                    away_odds = convert_hongkong_to_decimal(away_odds)
+                elif odds_type == 'Malay Odds':
+                    home_odds = convert_malay_to_decimal(home_odds)
+                    draw_odds = convert_malay_to_decimal(draw_odds)
+                    away_odds = convert_malay_to_decimal(away_odds)
+                elif odds_type == 'Indonesian Odds':
+                    home_odds = convert_indonesian_to_decimal(home_odds)
+                    draw_odds = convert_indonesian_to_decimal(draw_odds)
+                    away_odds = convert_indonesian_to_decimal(away_odds)
+                elif odds_type == 'Decimal Odds':
+                    # If already Decimal Odds, no conversion needed
+                    pass
 
             # Create a unique identifier for each match
             match_id = (current_date, match_time, home_team, away_team)
