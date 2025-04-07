@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
+from datetime import datetime, date
 from app.odds_calculation.models.odds_calculation_model import OddsCalculation
 from app.new_odds.models.new_odds_model import NewOdds
 from app.teams.models.team_model import Team
@@ -9,15 +10,17 @@ class OddsRetrievalService:
         self.db = db
 
     def get_all_calculated_odds(self):
-        """Retrieve all calculated odds along with original bookmaker odds, team names, and league names."""
+        """Retrieve all *upcoming* calculated odds with original bookmaker odds, team names, and league names."""
+        today = date.today()
+
         # Get all calculated odds with team/league info
         odds = self.db.query(OddsCalculation).options(
             joinedload(OddsCalculation.home_team).joinedload(Team.league),
             joinedload(OddsCalculation.away_team).joinedload(Team.league),
-        ).all()
+        ).filter(OddsCalculation.date >= today).all() 
 
-        # Fetch all original odds from NewOdds (we’ll match in memory)
-        new_odds = self.db.query(NewOdds).all()
+        # Fetch original odds (only for future games too)
+        new_odds = self.db.query(NewOdds).filter(NewOdds.date >= today).all()
 
         # Create a lookup dictionary for fast matching
         new_odds_lookup = {
