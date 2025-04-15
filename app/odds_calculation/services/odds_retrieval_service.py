@@ -17,7 +17,7 @@ class OddsRetrievalService:
         odds = self.db.query(OddsCalculation).options(
             joinedload(OddsCalculation.home_team),
             joinedload(OddsCalculation.away_team),
-        ).filter(OddsCalculation.date >= today).all()
+        ).filter(OddsCalculation.date >= today).order_by(OddsCalculation.date.asc()).all()
 
         # Preload NewOdds with league and country
         new_odds = self.db.query(NewOdds).options(
