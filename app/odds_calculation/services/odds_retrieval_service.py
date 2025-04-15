@@ -10,16 +10,21 @@ class OddsRetrievalService:
         self.db = db
 
     def get_all_calculated_odds(self):
-        """Retrieve all upcoming calculated odds with full team, league, and country info."""
+        """Retrieve all upcoming calculated odds with league & country from NewOdds."""
         today = date.today()
 
+        # Get all future OddsCalculation entries
         odds = self.db.query(OddsCalculation).options(
-            joinedload(OddsCalculation.home_team).joinedload(Team.league).joinedload(League.country),
-            joinedload(OddsCalculation.away_team).joinedload(Team.league).joinedload(League.country),
+            joinedload(OddsCalculation.home_team),
+            joinedload(OddsCalculation.away_team),
         ).filter(OddsCalculation.date >= today).all()
 
-        new_odds = self.db.query(NewOdds).filter(NewOdds.date >= today).all()
+        # Preload NewOdds with league and country
+        new_odds = self.db.query(NewOdds).options(
+            joinedload(NewOdds.league).joinedload(League.country)
+        ).filter(NewOdds.date >= today).all()
 
+        # Build a lookup map from (date, time, home_id, away_id)
         new_odds_lookup = {
             (o.date, o.time, o.home_team_id, o.away_team_id): o
             for o in new_odds
@@ -34,12 +39,13 @@ class OddsRetrievalService:
                 "time": o.time,
                 "home_team_id": o.home_team_id,
                 "home_team_name": o.home_team.team_name if o.home_team else None,
-                "home_team_league": o.home_team.league.league_name if o.home_team and o.home_team.league else None,
-                "home_team_country": o.home_team.league.country.country_name if o.home_team and o.home_team.league and o.home_team.league.country else None,
                 "away_team_id": o.away_team_id,
                 "away_team_name": o.away_team.team_name if o.away_team else None,
-                "away_team_league": o.away_team.league.league_name if o.away_team and o.away_team.league else None,
-                "away_team_country": o.away_team.league.country.country_name if o.away_team and o.away_team.league and o.away_team.league.country else None,
+
+                # ✅ Use League from NewOdds, not from team relationship
+                "match_league": original.league.league_name if original and original.league else None,
+                "match_country": original.league.country.country_name if original and original.league and original.league.country else None,
+
                 "calculated_home_chance": o.calculated_home_odds,
                 "calculated_draw_chance": o.calculated_draw_odds,
                 "calculated_away_chance": o.calculated_away_odds,
@@ -49,3 +55,4 @@ class OddsRetrievalService:
             })
 
         return enriched
+
