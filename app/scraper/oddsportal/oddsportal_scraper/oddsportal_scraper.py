@@ -84,21 +84,25 @@ def convert_relative_date(date_str):
         tomorrow = today + timedelta(days=1)
         return tomorrow.strftime('%d %b %Y')
     else:
-        # For other dates, try to parse the date
+        # Clean the string first to remove anything after the date
+        # Example: "26 Apr 2025  - Championship Group 2025" → "26 Apr 2025"
+        date_str = date_str.strip().split(' - ')[0].strip()
+
+        # Extract the date part after the comma if it exists (like "Sat, 26 Apr")
+        if ',' in date_str:
+            date_str = date_str.split(',')[1].strip()
+
         try:
-            # Extract the date part after the comma if it exists
-            if ',' in date_str:
-                date_str = date_str.split(',')[1].strip()
-            
-            # First try to parse with year if it's included
-            try:
-                return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
-            except ValueError:
-                # If no year in the string, add the current year
-                date_str = f"{date_str} {today.year}"
-                return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
+            # Try parsing with year
+            return datetime.strptime(date_str, '%d %b %Y').strftime('%d %b %Y')
         except ValueError:
-            return date_str
+            # Try adding current year if not provided
+            try:
+                date_str_with_year = f"{date_str} {today.year}"
+                return datetime.strptime(date_str_with_year, '%d %b %Y').strftime('%d %b %Y')
+            except ValueError:
+                return date_str  # Return original if all parsing fails
+
 
 def parse_match_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')
