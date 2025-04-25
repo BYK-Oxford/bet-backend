@@ -5,6 +5,6 @@ import os
 load_dotenv()
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
+    DATABASE_URL: str = "postgresql://postgres:B11rry2025**@db.zgjotpgtzqiqimolgper.supabase.co:5432/postgres"
 
 settings = Settings()
