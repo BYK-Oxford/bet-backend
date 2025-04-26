@@ -1,19 +1,31 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 import time
 
-def get_fishy_page_content_selenium(url):
+def get_page_content_selenium(url):
     options = Options()
-    options.headless = True  # Run Chrome in headless mode (without UI)
-    driver = webdriver.Chrome(options=options)
+    options.add_argument("--headless")  # Run Chrome in headless mode (without UI)
+    options.add_argument("--no-sandbox")  # Needed for Render (and other headless environments)
+    options.add_argument("--disable-dev-shm-usage")  # Disable shared memory usage
+    options.add_argument("--disable-gpu")  # Disable GPU (not needed in headless mode)
+    options.add_argument("--disable-features=VizDisplayCompositor")  # Avoid possible crashes on headless
+    options.add_argument("window-size=1920x1080")
+    
+    # Set path to Chromium binary (installed on Render)
+    options.binary_location = "/usr/bin/chromium"  # Path to Chromium installed on Render
 
+    # Path to ChromeDriver installed on Render
+    service = Service("/usr/lib/chromium-browser/chromedriver")  # Path to ChromeDriver
+
+    driver = webdriver.Chrome(service=service, options=options)
     driver.get(url)
-    time.sleep(5)  # Wait for the page to load
-
+    time.sleep(5)  # Wait for the page to load (you may want to adjust this)
+    
     page_content = driver.page_source
-    driver.quit()  # Close the browser
-
+    driver.quit()  # Close the browser after fetching the page
+    
     return page_content
 
 def parse_fishy_league_standing_data(page_content):
