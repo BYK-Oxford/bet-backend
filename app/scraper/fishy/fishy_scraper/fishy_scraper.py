@@ -16,8 +16,8 @@ def get_fishy_page_content_selenium(url):
     # Set path to Chromium binary (installed on Render)
     options.binary_location = "/usr/bin/chromium"  # Path to Chromium installed on Render
 
-    # Path to ChromeDriver installed on Render
-    service = Service("/usr/lib/chromium-browser/chromedriver")  # Path to ChromeDriver
+    
+    service = Service("app/chromedriver-linux64/chromedriver")  # Path to ChromeDriver
 
     driver = webdriver.Chrome(service=service, options=options)
     driver.get(url)
