@@ -20,12 +20,21 @@ def load_urls(scraper_name):
         return []
 
 @router.post("/scrape-new-odds/")
-def scrape_new_odds(scraper_name: str = "oddsportal", db: Session = Depends(get_db)):
+async def scrape_new_odds(scraper_name: str = "oddsportal", db: Session = Depends(get_db)):
     """Trigger scraping for new odds."""
+    print(f"Starting scraping for: {scraper_name}")
+    
     urls = load_urls(scraper_name)  # Load the URLs from the JSON file
+    print(f"Loaded {len(urls)} URLs for {scraper_name}")
+    for idx, url in enumerate(urls):
+        print(f"Scraping URL {idx+1}/{len(urls)}: {url}")
+        
     scraper_manager = ScraperManager(scraper_name, db)  # Initialize ScraperManager
     
     for url in urls:
-        scraper_manager.run_scraper(url)  # Start scraping for each URL
+        print(f"Scraping URL {idx+1}/{len(urls)}: {url}")
+        await scraper_manager.run_scraper(url)  # Start scraping for each URL
+    
+    print(f"Scraping completed for: {scraper_name}")
     
     return {"message": f"Scraping Completed for {scraper_name}"}
