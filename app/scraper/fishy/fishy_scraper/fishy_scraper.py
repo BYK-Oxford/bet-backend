@@ -1,18 +1,21 @@
-from playwright.sync_api import sync_playwright
 from playwright.async_api import async_playwright
 import asyncio
+import os
 from bs4 import BeautifulSoup
-import time
 
 async def get_fishy_page_content(url):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(
+            headless=True,
+            args=["--no-sandbox"]  # Add this if running inside Docker
+        )
         page = await browser.new_page()
         await page.goto(url)
-        await asyncio.sleep(5)  # Instead of time.sleep
+        await asyncio.sleep(5)  # Wait for the page to load
         page_content = await page.content()
         await browser.close()
         return page_content
+
 
 def parse_fishy_league_standing_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')

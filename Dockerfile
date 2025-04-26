@@ -1,7 +1,11 @@
-# Use an official Python image from Docker Hub
-FROM python:3.11-slim
+# Use an official Python runtime as a parent image
+FROM python:3.13.2-slim
 
-# Install system dependencies needed for Playwright and Chromium
+# Set environment variables for Playwright installation
+ENV PYTHONUNBUFFERED 1
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libx11-xcb1 \
@@ -11,34 +15,27 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     xdg-utils \
     wget \
-    ca-certificates \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libgbm1 \
-    libgtk-3-0 \
-    && apt-get clean \
+    libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright dependencies
+RUN pip install --upgrade pip
+RUN pip install playwright
+
+# Install Playwright browsers
+RUN playwright install --with-deps
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements.txt into the container
-COPY requirements.txt .
+# Copy your project files into the container
+COPY . /app
 
-# Install Python dependencies (use the --no-cache-dir flag to reduce image size)
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies
+RUN pip install -r requirements.txt -v
 
-# Install Playwright browser binaries
-RUN python -m playwright install chromium
-
-# Copy the rest of your FastAPI app code into the container
-COPY . .
-
-# Expose the port that FastAPI will run on
+# Expose the port your application will run on (e.g., 8000)
 EXPOSE 8000
 
-# Command to run your FastAPI app using Uvicorn
+# Command to run your app using Uvicorn
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
