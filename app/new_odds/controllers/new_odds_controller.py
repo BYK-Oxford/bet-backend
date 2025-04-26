@@ -31,10 +31,10 @@ async def scrape_new_odds(scraper_name: str = "oddsportal", db: Session = Depend
         print(f"🟣 Preparing to scrape URL {idx+1}/{len(urls)}: {url}")
         
         # 🛠 Create a new ScraperManager for each URL
-        scraper_manager = ScraperManager(scraper_name, db, url)
+        scraper_manager = ScraperManager(scraper_name, db)
         
         print(f"🟡 Scraping URL {idx+1}/{len(urls)}: {url}")
-        await scraper_manager.run_scraper()
+        await scraper_manager.run_scraper(url)
         print(f"✅ Scraping Complete +++ {idx+1}/{len(urls)}: {url}")
         
     print(f"✅ Scraping completed for: {scraper_name}")
