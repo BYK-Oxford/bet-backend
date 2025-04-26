@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime, timedelta
 
-def get_page_content_selenium(url):
+def get_odds_page_content_selenium(url):
     options = Options()
     options.add_argument("--headless")  # Run Chrome in headless mode (without UI)
     options.add_argument("--no-sandbox")  # Needed for Render (and other headless environments)

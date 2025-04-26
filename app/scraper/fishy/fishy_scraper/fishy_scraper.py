@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.service import Service
 from bs4 import BeautifulSoup
 import time
 
-def get_page_content_selenium(url):
+def get_fishy_page_content_selenium(url):
     options = Options()
     options.add_argument("--headless")  # Run Chrome in headless mode (without UI)
     options.add_argument("--no-sandbox")  # Needed for Render (and other headless environments)
