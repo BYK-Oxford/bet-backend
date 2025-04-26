@@ -17,5 +17,5 @@ apt-get install -y \
 pip install -r requirements.txt
 
 # Install Playwright browser binaries (Playwright will handle the installation of the browsers)
-python -m playwright install
+python -m playwright install chromium
 
