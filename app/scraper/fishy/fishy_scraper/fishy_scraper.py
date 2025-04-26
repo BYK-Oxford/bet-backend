@@ -1,32 +1,22 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
 import time
 
-def get_fishy_page_content_selenium(url):
-    options = Options()
-    options.add_argument("--headless")  # Run Chrome in headless mode (without UI)
-    options.add_argument("--no-sandbox")  # Needed for Render (and other headless environments)
-    options.add_argument("--disable-dev-shm-usage")  # Disable shared memory usage
-    options.add_argument("--disable-gpu")  # Disable GPU (not needed in headless mode)
-    options.add_argument("--disable-features=VizDisplayCompositor")  # Avoid possible crashes on headless
-    options.add_argument("window-size=1920x1080")
-    
-    # Set path to Chromium binary (installed on Render)
-    options.binary_location = "/usr/bin/chromium"  # Path to Chromium installed on Render
+def get_fishy_page_content(url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)  # Launch Chromium in headless mode
+        page = browser.new_page()
 
-    
-    service = Service("app/chromedriver-linux64/chromedriver")  # Path to ChromeDriver
+        # Set the viewport size to 1920x1080, same as your Selenium setup
+        page.set_viewport_size({"width": 1920, "height": 1080})
 
-    driver = webdriver.Chrome(service=service, options=options)
-    driver.get(url)
-    time.sleep(5)  # Wait for the page to load (you may want to adjust this)
-    
-    page_content = driver.page_source
-    driver.quit()  # Close the browser after fetching the page
-    
-    return page_content
+        page.goto(url)
+        time.sleep(5)  # Wait for the page to load (this might need adjustment)
+        
+        page_content = page.content()  # Get page content
+        browser.close()  # Close the browser
+        
+        return page_content
 
 def parse_fishy_league_standing_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')

@@ -1,13 +1,11 @@
 #!/bin/bash
 
-# Update and install Chromium dependencies
+# Update system and install Playwright dependencies (if any)
 apt-get update -y
+
+# Install additional dependencies for headless Chromium (in case Playwright needs them)
 apt-get install -y \
-    chromium \
-    chromium-driver \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
+    libnss3 \
     libx11-xcb1 \
     libxcomposite1 \
     libxdamage1 \
@@ -15,8 +13,9 @@ apt-get install -y \
     libxtst6 \
     xdg-utils
 
-# Give executable permission to chromedriver
-chmod +x app/chromedriver-linux64/chromedriver
-
 # Install other Python dependencies
 pip install -r requirements.txt
+
+# Install Playwright browser binaries (Playwright will handle the installation of the browsers)
+python -m playwright install
+

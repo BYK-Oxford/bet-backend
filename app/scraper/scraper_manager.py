@@ -1,5 +1,5 @@
-from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_odds_page_content_selenium, parse_match_data
-from app.scraper.fishy.fishy_scraper.fishy_scraper import get_fishy_page_content_selenium, parse_fishy_league_standing_data
+from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_odds_page_content, parse_match_data
+from app.scraper.fishy.fishy_scraper.fishy_scraper import get_fishy_page_content, parse_fishy_league_standing_data
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
 from app.teams.services.team_service import TeamService
@@ -41,7 +41,7 @@ class ScraperManager:
         if not league_code:
             raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
         
-        page_content = get_odds_page_content_selenium(url)
+        page_content = get_odds_page_content(url)
         match_data = parse_match_data(page_content)
         
         for match in match_data:
@@ -72,7 +72,7 @@ class ScraperManager:
         if not league_code:
             raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
         
-        page_content = get_fishy_page_content_selenium(url)
+        page_content = get_fishy_page_content(url)
         league_data = parse_fishy_league_standing_data(page_content)
         
         # Assuming league_data contains the required fields matching CurrentLeague model
