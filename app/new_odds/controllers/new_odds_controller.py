@@ -26,6 +26,6 @@ async def scrape_new_odds(scraper_name: str = "oddsportal", db: Session = Depend
     scraper_manager = ScraperManager(scraper_name, db)  # Initialize ScraperManager
     
     for url in urls:
-        scraper_manager.run_scraper(url)  # Start scraping for each URL
+        await scraper_manager.run_scraper(url)  # Start scraping for each URL
     
     return {"message": f"Scraping Completed for {scraper_name}"}

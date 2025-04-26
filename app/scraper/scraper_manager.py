@@ -36,12 +36,12 @@ class ScraperManager:
         else:
             raise ValueError("Unsupported scraper name")
     
-    def _run_oddsportal_scraper(self, url):
+    async def _run_oddsportal_scraper(self, url):
         league_code = self.oddsportal_league_mapping.get(url)
         if not league_code:
             raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
         
-        page_content = get_odds_page_content(url)
+        page_content =await get_odds_page_content(url)
         match_data = parse_match_data(page_content)
         
         for match in match_data:
@@ -66,13 +66,13 @@ class ScraperManager:
             print("New odds data:", new_odds_data)
             self.new_odds_service.create_new_odds(new_odds_data)
     
-    def _run_fishy_scraper(self, url):
+    async def _run_fishy_scraper(self, url):
         # Get league code from the URL mapping for TheFishy
         league_code = self.fishy_league_mapping.get(url)
         if not league_code:
             raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
         
-        page_content = get_fishy_page_content(url)
+        page_content =await get_fishy_page_content(url)
         league_data = parse_fishy_league_standing_data(page_content)
         
         # Assuming league_data contains the required fields matching CurrentLeague model

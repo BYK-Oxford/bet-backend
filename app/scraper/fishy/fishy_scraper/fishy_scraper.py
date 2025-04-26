@@ -1,21 +1,17 @@
 from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
+import asyncio
 from bs4 import BeautifulSoup
 import time
 
-def get_fishy_page_content(url):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)  # Launch Chromium in headless mode
-        page = browser.new_page()
-
-        # Set the viewport size to 1920x1080, same as your Selenium setup
-        page.set_viewport_size({"width": 1920, "height": 1080})
-
-        page.goto(url)
-        time.sleep(5)  # Wait for the page to load (this might need adjustment)
-        
-        page_content = page.content()  # Get page content
-        browser.close()  # Close the browser
-        
+async def get_fishy_page_content(url):
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+        await page.goto(url)
+        await asyncio.sleep(5)  # Instead of time.sleep
+        page_content = await page.content()
+        await browser.close()
         return page_content
 
 def parse_fishy_league_standing_data(page_content):
