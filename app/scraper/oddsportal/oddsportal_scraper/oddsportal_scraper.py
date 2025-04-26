@@ -6,17 +6,17 @@ import time
 from datetime import datetime, timedelta
 
 
-async def get_odds_page_content(url):
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(
+def get_odds_page_content(url):
+    with async_playwright() as p:
+        browser =  p.chromium.launch(
             headless=True,
             args=["--no-sandbox"]  # Add this if running inside Docker
         )
-        page = await browser.new_page()
-        await page.goto(url)
-        await asyncio.sleep(5)  # Wait for the page to load
-        page_content = await page.content()
-        await browser.close()
+        page =  browser.new_page()
+        page.goto(url)
+        asyncio.sleep(5)  # Wait for the page to load
+        page_content =  page.content()
+        browser.close()
         return page_content
 
 

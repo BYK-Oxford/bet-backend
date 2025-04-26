@@ -36,12 +36,12 @@ class ScraperManager:
         else:
             raise ValueError("Unsupported scraper name")
     
-    async def _run_oddsportal_scraper(self, url):
+    def _run_oddsportal_scraper(self, url):
         league_code = self.oddsportal_league_mapping.get(url)
         if not league_code:
             raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
         
-        page_content =await get_odds_page_content(url)
+        page_content =get_odds_page_content(url)
         match_data = parse_match_data(page_content)
         
         for match in match_data:
