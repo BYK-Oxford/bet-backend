@@ -15,6 +15,8 @@ apt-get install -y \
     libxtst6 \
     xdg-utils
 
+# Give executable permission to chromedriver
+chmod +x app/chromedriver-linux64/chromedriver
 
 # Install other Python dependencies
 pip install -r requirements.txt
