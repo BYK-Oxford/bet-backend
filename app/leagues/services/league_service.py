@@ -9,6 +9,13 @@ class LeagueService:
         'E1': 'English Championship',
         'SC0': 'Scottish Premier League',
         'SC1': 'Scottish Championship',
+        'T1': 'Süper Lig',
+        'I1': 'Serie A',
+        'I2': 'Serie B',
+        'SP1': 'La Liga',
+        'SP2': 'La Liga 2',
+        'D1': 'Bundesliga',
+        'D2': 'Bundesliga 2',
         # Add more mappings as needed
     }
      
@@ -17,7 +24,7 @@ class LeagueService:
         self.country_service = CountryService(db)  # Ensure we can resolve the country
 
     def get_or_create_league(self, league_name: str):
-        """Retrieve a league by name or code, or create a new one if it doesn't exist."""
+        '''Retrieve a league by name or code, or create a new one if it doesn't exist.'''
         # First try to find by full name
         league = self.db.query(League).filter(League.league_name == league_name).first()
         
@@ -50,7 +57,7 @@ class LeagueService:
             country = self.country_service.get_or_create_country(league_code)
             
             # Generate a structured ID like C1, C2, C10000
-            new_id = generate_custom_id(self.db, League, "L", "league_id")
+            new_id = generate_custom_id(self.db, League, 'L', 'league_id')
 
             league = League(
                 league_id=new_id,

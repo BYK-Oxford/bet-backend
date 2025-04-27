@@ -13,7 +13,15 @@ class CountryService:
             "E0": "England",
             "E1": "England",
             "SC0": "Scotland",
-            "SC1": "Scotland"
+            "SC1": "Scotland",
+            "T1": "Turkey",
+            "I1": "Italy",
+            "I2": "Italy",
+            "SP1": "Spain",
+            "SP2": "Spain",
+            "D1": "German",
+            "D2": "German",
+
         }
 
         # Get country name from division

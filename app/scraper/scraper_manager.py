@@ -17,7 +17,14 @@ class ScraperManager:
             "https://www.oddsportal.com/football/england/premier-league/": "E0",
             "https://www.oddsportal.com/football/england/championship/": "E1",
             "https://www.oddsportal.com/football/scotland/premiership/": "SC0",
-            "https://www.oddsportal.com/football/scotland/championship/": "SC1"
+            "https://www.oddsportal.com/football/scotland/championship/": "SC1",
+            "https://www.oddsportal.com/football/turkey/super-lig/": "T1",
+            "https://www.oddsportal.com/football/italy/serie-a/": "I1",
+            "https://www.oddsportal.com/football/italy/serie-b/": "I2",
+            "https://www.oddsportal.com/football/spain/laliga/": "SP1",
+            "https://www.oddsportal.com/football/spain/laliga2/": "SP2",
+            "https://www.oddsportal.com/football/germany/bundesliga/": "D1",
+            "https://www.oddsportal.com/football/germany/2-bundesliga/": "D2",
         }
 
         # Mapping URLs to league codes for TheFishy
@@ -25,7 +32,14 @@ class ScraperManager:
             "https://thefishy.co.uk/leaguetable.php?table=1": "E0",  # Premier League
             "https://thefishy.co.uk/leaguetable.php?table=2": "E1",  # Championship
             "https://thefishy.co.uk/leaguetable.php?table=10": "SC0", # Scottish Premier League
-            "https://thefishy.co.uk/leaguetable.php?table=11": "SC1"  # Scottish Championship
+            "https://thefishy.co.uk/leaguetable.php?table=11": "SC1",  # Scottish Championship
+            "https://thefishy.co.uk/leaguetable.php?table=79": "T1",
+            "https://thefishy.co.uk/leaguetable.php?table=33": "I1",
+            "https://thefishy.co.uk/leaguetable.php?table=83": "I2",
+            "https://thefishy.co.uk/leaguetable.php?table=31": "SP1",
+            "https://thefishy.co.uk/leaguetable.php?table=81": "SP2",
+            "https://thefishy.co.uk/leaguetable.php?table=32": "D1",
+            "https://thefishy.co.uk/leaguetable.php?table=82": "D2",
         }
     
     def run_scraper(self, url):
