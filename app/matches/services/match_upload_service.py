@@ -25,65 +25,59 @@ class UploadService:
 
             for _, row in df.iterrows():
                 # Prepare match data
-                date =  row["Date"]
-                time = row["Time"]
+                date = row.get("Date", "")
+                time = row.get("Time", "")
                 match_data = {
                     "date": f"{date} {time}",
-                    "league": row["Div"],
-                    "season": row["Date"],
-                    "home_team": row["HomeTeam"],
-                    "away_team": row["AwayTeam"],
-                    "referee": row["Referee"],
+                    "league": row.get("Div", ""),
+                    "season": row.get("Date", ""),
+                    "home_team": row.get("HomeTeam", ""),
+                    "away_team": row.get("AwayTeam", ""),
+                    "referee": row.get("Referee", ""),
                 }
                 match = self.match_service.create_match(match_data)
 
                 # Prepare betting odds data
                 odds_data = {
-                   "match_id": match.match_id,
-
-                    # Full-time result odds
-                    "B365H": row.get("B365H"),
-                    "B365D": row.get("B365D"),
-                    "B365A": row.get("B365A"),
-                    "BWH": row.get("BWH"),
-                    "BWD": row.get("BWD"),
-                    "BWA": row.get("BWA"),
-                    "BFH": row.get("BFH"),
-                    "BFD": row.get("BFD"),
-                    "BFA": row.get("BFA"),
-                    "PSH": row.get("PSH"),
-                    "PSD": row.get("PSD"),
-                    "PSA": row.get("PSA"),
-                    "WHH": row.get("WHH"),
-                    "WHD": row.get("WHD"),
-                    "WHA": row.get("WHA"),
-                    "MaxH": row.get("MaxH"),
-                    "MaxD": row.get("MaxD"),
-                    "MaxA": row.get("MaxA"),
-                    "AvgH": row.get("AvgH"),
-                    "AvgD": row.get("AvgD"),
-                    "AvgA": row.get("AvgA"),
-
-                    # Over/Under 2.5 Goals odds
-                    "B365_over_2_5": row.get("B365>2.5"),
-                    "B365_under_2_5": row.get("B365<2.5"),
-                    "P_over_2_5": row.get("P>2.5"),
-                    "P_under_2_5": row.get("P<2.5"),
-                    "Max_over_2_5": row.get("Max>2.5"),
-                    "Max_under_2_5": row.get("Max<2.5"),
-                    "Avg_over_2_5": row.get("Avg>2.5"),
-                    "Avg_under_2_5": row.get("Avg<2.5"),
-
-                    # Asian Handicap odds
-                    "AHh": row.get("AHh"),
-                    "B365AHH": row.get("B365AHH"),
-                    "B365AHA": row.get("B365AHA"),
-                    "PAHH": row.get("PAHH"),
-                    "PAHA": row.get("PAHA"),
-                    "MaxAHH": row.get("MaxAHH"),
-                    "MaxAHA": row.get("MaxAHA"),
-                    "AvgAHH": row.get("AvgAHH"),
-                    "AvgAHA": row.get("AvgAHA"),
+                    "match_id": match.match_id,
+                    "B365H": row.get("B365H", None),
+                    "B365D": row.get("B365D", None),
+                    "B365A": row.get("B365A", None),
+                    "BWH": row.get("BWH", None),
+                    "BWD": row.get("BWD", None),
+                    "BWA": row.get("BWA", None),
+                    "BFH": row.get("BFH", None),
+                    "BFD": row.get("BFD", None),
+                    "BFA": row.get("BFA", None),
+                    "PSH": row.get("PSH", None),
+                    "PSD": row.get("PSD", None),
+                    "PSA": row.get("PSA", None),
+                    "WHH": row.get("WHH", None),
+                    "WHD": row.get("WHD", None),
+                    "WHA": row.get("WHA", None),
+                    "MaxH": row.get("MaxH", None),
+                    "MaxD": row.get("MaxD", None),
+                    "MaxA": row.get("MaxA", None),
+                    "AvgH": row.get("AvgH", None),
+                    "AvgD": row.get("AvgD", None),
+                    "AvgA": row.get("AvgA", None),
+                    "B365_over_2_5": row.get("B365>2.5", None),
+                    "B365_under_2_5": row.get("B365<2.5", None),
+                    "P_over_2_5": row.get("P>2.5", None),
+                    "P_under_2_5": row.get("P<2.5", None),
+                    "Max_over_2_5": row.get("Max>2.5", None),
+                    "Max_under_2_5": row.get("Max<2.5", None),
+                    "Avg_over_2_5": row.get("Avg>2.5", None),
+                    "Avg_under_2_5": row.get("Avg<2.5", None),
+                    "AHh": row.get("AHh", None),
+                    "B365AHH": row.get("B365AHH", None),
+                    "B365AHA": row.get("B365AHA", None),
+                    "PAHH": row.get("PAHH", None),
+                    "PAHA": row.get("PAHA", None),
+                    "MaxAHH": row.get("MaxAHH", None),
+                    "MaxAHA": row.get("MaxAHA", None),
+                    "AvgAHH": row.get("AvgAHH", None),
+                    "AvgAHA": row.get("AvgAHA", None),
                 }
 
                 self.betting_odds_service.create_betting_odds(odds_data)
@@ -115,8 +109,8 @@ class UploadService:
                     match_id=match.match_id, statistics_data=statistics_data
                 )
 
-
             return {"message": "CSV uploaded and processed successfully"}
 
         except Exception as e:
             return {"error": f"Failed to process CSV: {str(e)}"}
+
