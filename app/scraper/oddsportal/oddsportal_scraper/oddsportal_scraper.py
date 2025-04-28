@@ -14,7 +14,7 @@ async def get_odds_page_content(url):
         )
         page = await browser.new_page()
         await page.goto(url)
-        await asyncio.sleep(5)  # Wait for the page to load
+        await asyncio.sleep(15)  # Wait for the page to load
         page_content = await page.content()
         await browser.close()
         return page_content
