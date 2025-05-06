@@ -51,59 +51,66 @@ class ScraperManager:
             raise ValueError("Unsupported scraper name")
     
     async def _run_oddsportal_scraper(self, url):
-        league_code = self.oddsportal_league_mapping.get(url)
-        if not league_code:
-            raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
-        
-        page_content =await get_odds_page_content(url)
-        match_data = parse_match_data(page_content)
-        
-        for match in match_data:
-            # Get team objects using TeamService
-            home_team = self.team_service.get_or_create_team(match['Home Team'], league_code)
-            away_team = self.team_service.get_or_create_team(match['Away Team'], league_code)
-            
-            if not home_team or not away_team:
-                print(f"Warning: Could not find or create teams for {match['Home Team']} or {match['Away Team']}")
-                continue
+        try:
+            league_code = self.oddsportal_league_mapping.get(url)
+            if not league_code:
+                raise ValueError(f"Unknown URL for OddsPortal scraper: {url}")
+
+            page_content = await get_odds_page_content(url)
+            match_data = parse_match_data(page_content)
+
+            for match in match_data:
+                home_team = self.team_service.get_or_create_team(match['Home Team'], league_code)
+                away_team = self.team_service.get_or_create_team(match['Away Team'], league_code)
                 
-            new_odds_data = {
-                'date': match['Date'],
-                'time': match['Time'],
-                'home_team_id': home_team.team_id,  # Using the actual team ID from database
-                'away_team_id': away_team.team_id,  # Using the actual team ID from database
-                'home_odds': match['Home Odds'],
-                'draw_odds': match['Draw Odds'],
-                'away_odds': match['Away Odds'],
-                'league_code': league_code
-            }
-            print("New odds data:", new_odds_data)
-            self.new_odds_service.create_new_odds(new_odds_data)
+                if not home_team or not away_team:
+                    print(f"Warning: Could not find or create teams for {match['Home Team']} or {match['Away Team']}")
+                    continue
+                
+                new_odds_data = {
+                    'date': match['Date'],
+                    'time': match['Time'],
+                    'home_team_id': home_team.team_id,
+                    'away_team_id': away_team.team_id,
+                    'home_odds': match['Home Odds'],
+                    'draw_odds': match['Draw Odds'],
+                    'away_odds': match['Away Odds'],
+                    'league_code': league_code
+                }
+                print("New odds data:", new_odds_data)
+                self.new_odds_service.create_new_odds(new_odds_data)
+
+            return "OddsPortal Scraping: Success"
+        except Exception as e:
+            return f"OddsPortal Scraping: Failed - {str(e)}"
     
     async def _run_fishy_scraper(self, url):
-        # Get league code from the URL mapping for TheFishy
-        league_code = self.fishy_league_mapping.get(url)
-        if not league_code:
-            raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
-        
-        page_content =await get_fishy_page_content(url)
-        league_data = parse_fishy_league_standing_data(page_content)
-        
-        # Assuming league_data contains the required fields matching CurrentLeague model
-        for team_standing in league_data:
-            current_league_data = {
-                'team_id': team_standing['Team'],
-                'year': team_standing['Year'],
-                'position': team_standing['Position'],
-                'played': team_standing['Played'],
-                'wins': team_standing['Wins'],
-                'draws': team_standing['Draws'],
-                'losses': team_standing['Losses'],
-                'goals_for': team_standing['Goals For'],
-                'goals_against': team_standing['Goals Against'],
-                'goal_difference': team_standing['Goal Difference'],
-                'points': team_standing['Points'],
-                'league_code': league_code  # Adding the league code
-            }
-            print("Current league data:", current_league_data)
-            self.current_league_service.create_or_update_current_league(current_league_data)
+        try:
+            league_code = self.fishy_league_mapping.get(url)
+            if not league_code:
+                raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
+
+            page_content = await get_fishy_page_content(url)
+            league_data = parse_fishy_league_standing_data(page_content)
+
+            for team_standing in league_data:
+                current_league_data = {
+                    'team_id': team_standing['Team'],
+                    'year': team_standing['Year'],
+                    'position': team_standing['Position'],
+                    'played': team_standing['Played'],
+                    'wins': team_standing['Wins'],
+                    'draws': team_standing['Draws'],
+                    'losses': team_standing['Losses'],
+                    'goals_for': team_standing['Goals For'],
+                    'goals_against': team_standing['Goals Against'],
+                    'goal_difference': team_standing['Goal Difference'],
+                    'points': team_standing['Points'],
+                    'league_code': league_code
+                }
+                print("Current league data:", current_league_data)
+                self.current_league_service.create_or_update_current_league(current_league_data)
+
+            return "TheFishy Scraping: Success"
+        except Exception as e:
+            return f"TheFishy Scraping: Failed - {str(e)}"

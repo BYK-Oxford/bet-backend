@@ -1,8 +1,6 @@
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import asyncio
-import os
-import time
 from datetime import datetime, timedelta
 
 
@@ -10,11 +8,17 @@ async def get_odds_page_content(url):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
-            args=["--no-sandbox"]  # Add this if running inside Docker
+            args=["--no-sandbox"]
         )
         page = await browser.new_page()
         await page.goto(url)
-        await asyncio.sleep(15)  # Wait for the page to load
+
+        # Wait for critical element to appear first
+        await page.wait_for_selector("div.group.flex", timeout=60000)
+
+        # Then optionally wait a bit longer to allow dynamic content like odds to populate
+        await asyncio.sleep(30)
+
         page_content = await page.content()
         await browser.close()
         return page_content
