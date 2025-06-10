@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.scraper.scraper_manager import ScraperManager
 
 router = APIRouter()
-
+    
 # Function to load URLs for scraping
 def load_urls(scraper_name):
     if scraper_name == "oddsportal":

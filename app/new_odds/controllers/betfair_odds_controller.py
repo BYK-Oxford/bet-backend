@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.new_odds.services.betfair_service import get_betfair_odds
+from app.core.database import get_db
+from app.new_odds.services.betfair_service import BetfairService
 import asyncio
 
 router = APIRouter()
@@ -11,7 +12,9 @@ async def get_new_betfair_odds(db: Session = Depends(get_db)):
     """Trigger getting new betfair odds"""
     print(f"🔵 Getting new odds from BetFair")
     
+    betfair_service = BetfairService(db)
+    
     # Run get_betfair_odds() in a separate thread (non-blocking)
-    await asyncio.to_thread(get_betfair_odds)
+    await asyncio.to_thread(betfair_service.get_betfair_odds)
 
     return {"message": "Triggered fetching Betfair odds"}
