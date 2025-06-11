@@ -21,6 +21,8 @@ class CountryService:
             "SP2": "Spain",
             "D1": "German",
             "D2": "German",
+            "B20":"Brazil",
+            "S2":"Spain"
 
         }
 

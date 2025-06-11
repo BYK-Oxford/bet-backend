@@ -13,7 +13,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "Ef17NEA5AuoWhIR9FWsBmzi1HYfk8tMB/HQPt54kVtY="
+        self.sessionToken = "8EnViDjSRhDPCUp/3Q+02ZqESUIqr+SJO7oLIsu/Yls="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -93,7 +93,7 @@ class BetfairService:
 
     def get_filtered_competitions(self) -> Dict[str, Dict]:
         target_names = [
-            "Spanish Segunda", "Brazilian U20", 
+            "Spanish Segunda Division", "Brazilian U20", 
         ]
         event_type_id = "1"  # Soccer
         res = self.list_competitions(event_type_id)
@@ -108,106 +108,185 @@ class BetfairService:
                     idx += 1
         return competitions_map
 
-    def transform_and_save_betfair_odds(self, event_data: Dict, market_data: List[Dict]) -> None:
+   
+
+    def display_filtered_competitions_and_markets(self):
+        print("\n=== Filtered Competitions ===")
+        filtered_comps = self.get_filtered_competitions()
+
+        competitions_data = []
+
+        for key, comp in filtered_comps.items():
+            print(f"{key} - {comp['name']}")
+
+        for key, comp in filtered_comps.items():
+            comp_dict = {
+                "competition_name": comp['name'],
+                "competition_id": comp['id'],
+                "events": []
+            }
+
+            print(f"\nFetching matches for: {comp['name']}")
+            comp_id = comp['id']
+            res = self.list_events("1", comp_id)
+
+            if not res or "result" not in res:
+                print("No events found.")
+                continue
+
+            for ev in res["result"]:
+                event = ev['event']
+                event_id = event['id']
+                event_name = event['name']
+                event_time = event['openDate']
+
+                event_dict = {
+                    "event_id": event_id,
+                    "event_name": event_name,
+                    "start_time": event_time,
+                    "markets": []
+                }
+
+                market_types = ["MATCH_ODDS", "OVER_UNDER_25", "OVER_UNDER_15", "OVER_UNDER_35"]
+                mc_res = self.list_market_catalogue(event_id, market_types)
+
+                if not mc_res or "result" not in mc_res or len(mc_res["result"]) == 0:
+                    continue
+
+                market_ids = [m["marketId"] for m in mc_res["result"]]
+                mb_res = self.list_market_book(market_ids)
+                if not mb_res or "result" not in mb_res:
+                    continue
+
+                market_book_map = {m["marketId"]: m for m in mb_res["result"]}
+
+                for market in mc_res["result"]:
+                    market_id = market["marketId"]
+                    market_name = market.get("marketName", "N/A")
+                    start_time = market.get("marketStartTime", "N/A")
+                    runners = market.get("runners", [])
+                    book = market_book_map.get(market_id, {})
+
+                    market_dict = {
+                        "market_id": market_id,
+                        "market_name": market_name,
+                        "start_time": start_time,
+                        "selections": []
+                    }
+
+                    for runner in runners:
+                        selection_id = runner["selectionId"]
+                        runner_name = runner["runnerName"]
+
+                        book_runner = next(
+                            (r for r in book.get("runners", []) if r["selectionId"] == selection_id), None)
+
+                        best_back = best_lay = None
+                        if book_runner:
+                            backs = book_runner.get("ex", {}).get("availableToBack", [])
+                            lays = book_runner.get("ex", {}).get("availableToLay", [])
+                            if backs:
+                                best_back = {
+                                    "price": backs[0]["price"],
+                                    "size": backs[0]["size"]
+                                }
+                            if lays:
+                                best_lay = {
+                                    "price": lays[0]["price"],
+                                    "size": lays[0]["size"]
+                                }
+
+                        market_dict["selections"].append({
+                            "selection_id": selection_id,
+                            "name": runner_name,
+                            "best_back": best_back,
+                            "best_lay": best_lay
+                        })
+
+                    event_dict["markets"].append(market_dict)
+
+                comp_dict["events"].append(event_dict)
+
+            competitions_data.append(comp_dict)
+            # After collecting all markets for this event, call the transform-and-save
+            # We pass the full `ev` and the complete market catalogue
+            try:
+                self.transform_and_save_betfair_odds(event_dict, comp_dict["competition_id"])
+            except Exception as e:
+                print(f"Error saving odds for event {event_name}: {e}")
+
+        # Print everything as pretty JSON
+        # print("\n===== Final JSON Output =====\n")
+        # print(json.dumps(competitions_data, indent=2))
+
+
+    def transform_and_save_betfair_odds(self, event_dict: Dict, competition_id: str) -> None:
         """
-        Transforms Betfair API data to match your database schema.
+        Transforms already structured event data and saves MATCH_ODDS to the DB.
+
         Args:
-            event_data: Raw event data from listEvents
-            market_data: Raw market catalogue data (not market book)
+            event_dict: A single event dictionary from the structured JSON
+            competition_name: Name of the competition to map league
         """
-        # FIXED: Get competition info from market catalogue instead of event data
-        if not market_data:
-            print(f"No market data provided")
+        event_name = event_dict["event_name"]
+        start_time = datetime.strptime(event_dict["start_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+        # Map competition to league code
+        league_code = self.map_betfair_competition_to_league(competition_id)
+        if not league_code:
+            print(f"Unsupported league: {competition_id} for {event_name}")
             return
-            
-        # Get the first market to extract competition info
-        first_market = market_data[0]
-        
-        # Check if competition info exists in market data
-        if 'competition' not in first_market:
-            print(f"No competition info in market data for event: {event_data['event']['name']}")
-            return
-        
-        # Extract event details
-        event_name = event_data['event']['name']
-        event_time = datetime.strptime(
-            event_data['event']['openDate'], 
-            "%Y-%m-%dT%H:%M:%S.%fZ"  # Betfair's time format
-        )
-        
-        # Parse teams from event name (e.g., "Man Utd v Arsenal")
+
+        # Parse team names
         try:
             home_team, away_team = self.parse_teams_from_event(event_name)
         except ValueError as e:
-            print(f"Failed to parse teams: {e}")
-            return
-        
-        # FIXED: Get league code from market data instead of event data
-        league_code = self.map_betfair_competition_to_league(
-            first_market['competition']['id']
-        )
-        
-        # Skip if league not supported
-        if not league_code:
-            print(f"Skipping unsupported league: {event_name} (Competition ID: {first_market['competition']['id']})")
+            print(f"Parse error for {event_name}: {e}")
             return
 
-        LEAGUE_NAME_MAPPING = {
-            'E0': 'English Premier League',
-            'E1': 'English Championship',
-            'SC0': 'Scottish Premier League',
-            'SC1': 'Scottish Championship',
-            'T1': 'Süper Lig',
-            'I1': 'Serie A',
-            'I2': 'Serie B',
-            'SP1': 'La Liga',
-            'SP2': 'La Liga 2',
-            'D1': 'Bundesliga',
-            'D2': 'Bundesliga 2',
-            'B20': 'Brazilian U20',
-            'S2': 'Spanish Segunda División' 
-        }
-        league_name = LEAGUE_NAME_MAPPING.get(league_code)
-        
-        # Get or create teams
-        home_team_db = self.team_service.get_or_create_team(home_team, league_name)
-        away_team_db = self.team_service.get_or_create_team(away_team, league_name)
-        
-        # Get market book data for odds
-        market_ids = [m["marketId"] for m in market_data]
-        market_books = self.list_market_book(market_ids)
-        
-        if not market_books or "result" not in market_books:
-            print(f"No market book data for {event_name}")
-            return
-        
-        # Extract odds from market book data (MATCH_ODDS market)
-        match_odds_book = next(
-            (m for m in market_books["result"] if any(
-                mc["marketName"] == "MATCH_ODDS" and mc["marketId"] == m["marketId"] 
-                for mc in market_data
-            )), 
+        # Find MATCH_ODDS market
+        match_market = next(
+            (m for m in event_dict["markets"] if m["market_name"].lower().replace(" ", "") == "matchodds"),
             None
         )
-        
-        if not match_odds_book:
-            print(f"No match odds found for {event_name}")
+
+        if not match_market:
+            print(f"No MATCH_ODDS market found for {event_name}")
             return
 
-        # Prepare data for NewOddsService
+        # Extract odds
+        home_odds = draw_odds = away_odds = None
+        for sel in match_market["selections"]:
+            name = sel["name"].lower()
+            best_back = sel.get("best_back", {})
+            price = best_back.get("price") if best_back else None
+
+            if price:
+                if name == home_team.lower():
+                    home_odds = price
+                elif "draw" in name:
+                    draw_odds = price
+                elif name == away_team.lower():
+                    away_odds = price
+        print(f"Extracted odds for {event_name}: Home={home_odds}, Draw={draw_odds}, Away={away_odds}")
+        if not all([home_odds, draw_odds, away_odds]):
+            print(f"Incomplete odds for {event_name} - skipping")
+            return
+
         odds_data = {
-            'date': event_time.date(),
-            'time': event_time.time(),
-            'home_team_id': home_team_db.team_id,
-            'away_team_id': away_team_db.team_id,
-            'home_odds': self.get_runner_price_from_book(match_odds_book, home_team),
-            'draw_odds': self.get_runner_price_from_book(match_odds_book, 'Draw'),
-            'away_odds': self.get_runner_price_from_book(match_odds_book, away_team),
+            'date': start_time.date(),
+            'time': start_time.time(),
+            'home_team_id': self.team_service.get_or_create_team(home_team, league_code).team_id,
+            'away_team_id': self.team_service.get_or_create_team(away_team, league_code).team_id,
+            'home_odds': home_odds,
+            'draw_odds': draw_odds,
+            'away_odds': away_odds,
             'league_code': league_code
         }
-        
-        # Save to database
+
+        print(f"Saving Odds: {event_name} | H {home_odds} | D {draw_odds} | A {away_odds}")
         self.new_odds_service.create_new_odds(odds_data)
+
 
     def parse_teams_from_event(self, event_name: str) -> tuple:
         """Splits 'Team A v Team B' into two team names."""

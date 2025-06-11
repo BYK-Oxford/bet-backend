@@ -16,6 +16,8 @@ class LeagueService:
         'SP2': 'La Liga 2',
         'D1': 'Bundesliga',
         'D2': 'Bundesliga 2',
+        'B20': 'Brazilian U20',
+        'S2': 'Spanish Segunda Division' 
         # Add more mappings as needed
     }
      
