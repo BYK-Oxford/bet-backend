@@ -7,6 +7,10 @@ class Team(Base):
 
     team_id = Column(String, primary_key=True, index=True)
     team_name = Column(String, unique=True, nullable=False)
+    home_primary_color = Column(String, nullable=True)
+    home_secondary_color = Column(String, nullable=True)
+    away_primary_color = Column(String, nullable=True)
+    away_secondary_color = Column(String,  nullable=True)
     league_id = Column(String, ForeignKey("leagues.league_id"))
     country_id = Column(String, ForeignKey("countries.country_id"))
 

@@ -13,7 +13,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "8EnViDjSRhDPCUp/3Q+02ZqESUIqr+SJO7oLIsu/Yls="
+        self.sessionToken = "wLV7VWhg2SV6QPKux7szbF6YmZ6+I9B/dyl6w0dwMMY="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services

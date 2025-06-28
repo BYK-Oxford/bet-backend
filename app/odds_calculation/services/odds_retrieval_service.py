@@ -11,19 +11,18 @@ class OddsRetrievalService:
 
     def get_all_calculated_odds(self):
         """Retrieve all upcoming calculated odds with league & country from NewOdds."""
-        today = date.today()
+        # today = date.today()
 
         # Get all future OddsCalculation entries
         odds = self.db.query(OddsCalculation).options(
             joinedload(OddsCalculation.home_team),
             joinedload(OddsCalculation.away_team),
-        ).filter(OddsCalculation.date >= today).order_by(OddsCalculation.date.asc()).all()
+        ).order_by(OddsCalculation.date.desc(), OddsCalculation.time.desc()).limit(50).all()
 
         # Preload NewOdds with league and country
         new_odds = self.db.query(NewOdds).options(
             joinedload(NewOdds.league).joinedload(League.country)
-        ).filter(NewOdds.date >= today).all()
-
+        ).order_by(NewOdds.date.desc(), NewOdds.time.desc()).limit(50).all()
         # Build a lookup map from (date, time, home_id, away_id)
         new_odds_lookup = {
             (o.date, o.time, o.home_team_id, o.away_team_id): o
@@ -31,6 +30,8 @@ class OddsRetrievalService:
         }
 
         enriched = []
+
+        
         for o in odds:
             original = new_odds_lookup.get((o.date, o.time, o.home_team_id, o.away_team_id))
             enriched.append({
@@ -39,8 +40,13 @@ class OddsRetrievalService:
                 "time": o.time,
                 "home_team_id": o.home_team_id,
                 "home_team_name": o.home_team.team_name if o.home_team else None,
+                "home_team_primary_color": o.home_team.home_primary_color if o.home_team else None,
+                "home_team_secondary_color": o.home_team.home_secondary_color if o.home_team else None,
+                
                 "away_team_id": o.away_team_id,
                 "away_team_name": o.away_team.team_name if o.away_team else None,
+                "away_team_primary_color": o.away_team.away_primary_color if o.away_team else None,
+                "away_team_secondary_color": o.away_team.away_secondary_color if o.away_team else None,
 
                 # ✅ Use League from NewOdds, not from team relationship
                 "match_league": original.league.league_name if original and original.league else None,
