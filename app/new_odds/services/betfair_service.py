@@ -222,12 +222,6 @@ class BetfairService:
                     print(f"Error saving odds for event {event_dict.get('event_name')} in competition {comp_dict['competition_name']}: {e}")
 
 
-
-        # Print everything as pretty JSON
-        # print("\n===== Final JSON Output =====\n")
-        # print(json.dumps(competitions_data, indent=2))
-
-
     def transform_and_save_betfair_odds(self, event_dict: Dict, competition_name: str) -> None:
         """
         Transforms already structured event data and saves MATCH_ODDS to the DB.
