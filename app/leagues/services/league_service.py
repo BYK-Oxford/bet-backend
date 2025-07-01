@@ -10,12 +10,12 @@ class LeagueService:
         'SC0': 'Scottish Premier League',
         'SC1': 'Scottish Championship',
         'T1': 'Süper Lig',
-        'I1': 'Serie A',
-        'I2': 'Serie B',
+        'I1': 'Italian Serie A',
+        'I2': 'Italian Serie B',
         'SP1': 'La Liga',
         'SP2': 'La Liga 2',
-        'D1': 'Bundesliga',
-        'D2': 'Bundesliga 2',
+        'D1': 'German Bundesliga',
+        'D2': 'German Bundesliga 2',
         'B20': 'Brazilian U20',
         'S2': 'Spanish Segunda Division' 
         # Add more mappings as needed
