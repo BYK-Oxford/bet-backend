@@ -13,7 +13,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "wLV7VWhg2SV6QPKux7szbF6YmZ6+I9B/dyl6w0dwMMY="
+        self.sessionToken = "kwQFju03t7uu+QcZpB9UuwM/jawgCPyPplGHw3GNfQs="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -93,7 +93,12 @@ class BetfairService:
 
     def get_filtered_competitions(self) -> Dict[str, Dict]:
         target_names = [
-            "Spanish Segunda Division", "Brazilian U20", 
+            "English Premier League", "English Championship",
+                "Scottish Premier League", "Scottish Championship",
+                "Spanish La Liga", "Spanish Segunda",
+                "Italian Serie A", "Italian Serie B",
+                "German Bundesliga", "German Bundesliga 2",
+                "Turkish Super Lig",
         ]
         event_type_id = "1"  # Soccer
         res = self.list_competitions(event_type_id)
@@ -208,19 +213,22 @@ class BetfairService:
                 comp_dict["events"].append(event_dict)
 
             competitions_data.append(comp_dict)
-            # After collecting all markets for this event, call the transform-and-save
-            # We pass the full `ev` and the complete market catalogue
-            try:
-                self.transform_and_save_betfair_odds(event_dict, comp_dict["competition_id"])
-            except Exception as e:
-                print(f"Error saving odds for event {event_name}: {e}")
+
+            # Save after processing all events for the competition
+            for event_dict in comp_dict["events"]:
+                try:
+                    self.transform_and_save_betfair_odds(event_dict, comp_dict["competition_name"])
+                except Exception as e:
+                    print(f"Error saving odds for event {event_dict.get('event_name')} in competition {comp_dict['competition_name']}: {e}")
+
+
 
         # Print everything as pretty JSON
         # print("\n===== Final JSON Output =====\n")
         # print(json.dumps(competitions_data, indent=2))
 
 
-    def transform_and_save_betfair_odds(self, event_dict: Dict, competition_id: str) -> None:
+    def transform_and_save_betfair_odds(self, event_dict: Dict, competition_name: str) -> None:
         """
         Transforms already structured event data and saves MATCH_ODDS to the DB.
 
@@ -232,9 +240,9 @@ class BetfairService:
         start_time = datetime.strptime(event_dict["start_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
         # Map competition to league code
-        league_code = self.map_betfair_competition_to_league(competition_id)
+        league_code = self.map_betfair_competition_to_league(competition_name)
         if not league_code:
-            print(f"Unsupported league: {competition_id} for {event_name}")
+            print(f"Unsupported league: {competition_name} for {event_name}")
             return
 
         # Parse team names
@@ -307,32 +315,19 @@ class BetfairService:
                 return first_runner['ex']['availableToBack'][0]['price']
         return None
 
-    def map_betfair_competition_to_league(self, betfair_comp_id: str) -> Optional[str]:
+    def map_betfair_competition_to_league(self, betfair_comp_name: str) -> Optional[str]:
         """Maps Betfair competition IDs to your league codes."""
         league_mapping = {
-            "10932509": "E0",  # English Premier League
-            "10932510": "E1",  # English Championship
-            "10932513": "SC0", # Scottish Premiership
-            "12204313": "S2",  # Spanish Segunda
-            "12148223": "B20", # Brazilian U20
-        }
-        return league_mapping.get(str(betfair_comp_id))
+            "English Premier League": "E0",  # English Premier League
+            "English Championship": "E1",  # English Championship
+            "Scottish Premier League": "SC0", # Scottish Premiership
+            "Spanish Segunda": "S2",  # Spanish Segunda
+            "German Bundesliga": "D1",  
+            "German Bundesliga 2": "D2",  
+            "Italian Serie A": "I1",  
+            "Italian Serie B": "I2",  
 
-    def get_betfair_odds(self) -> None:
-        filtered_comps = self.get_filtered_competitions()
-        
-        for comp in filtered_comps.values():
-            events = self.list_events("1", comp['id'])
-            if not events or "result" not in events:
-                continue
-                
-            for event in events["result"]:
-                market_types = ["MATCH_ODDS"]
-                markets = self.list_market_catalogue(event['event']['id'], market_types)
-                
-                if markets and "result" in markets:
-                    # FIXED: Pass market catalogue result instead of market book result
-                    self.transform_and_save_betfair_odds(
-                        event, 
-                        markets["result"]  # This contains competition info
-                    )
+        }
+        return league_mapping.get(str(betfair_comp_name))
+
+    
