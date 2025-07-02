@@ -24,14 +24,7 @@ class NewOddsService:
         return league
 
     def create_new_odds(self, odds_data: dict):
-        """Create or update new odds data in the database."""
-
-        print("Received odds_data:", odds_data)
-    
-        if odds_data is None:
-            print("Warning: odds_data is None")
-            return None
-            
+        """Create or update new odds data in the database."""            
         # Skip if any of the odds values are '-'
         if (odds_data['home_odds'] == '-' or 
             odds_data['draw_odds'] == '-' or 
@@ -69,7 +62,6 @@ class NewOddsService:
             existing_odds.away_odds = odds_data['away_odds']
             existing_odds.season_id = season.season_id
             existing_odds.league_id = league.league_id
-            print("updating existing full_market_data:", odds_data.get('full_market_data'))
             existing_odds.full_market_data = odds_data['full_market_data']
             self.db.commit()
             self.db.refresh(existing_odds)
@@ -94,7 +86,6 @@ class NewOddsService:
 
         )
 
-        print("creating new full_market_data:", odds_data.get('full_market_data'))
 
         # Add the new odds to the session and commit the transaction
         self.db.add(new_odds)
