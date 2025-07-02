@@ -11,7 +11,7 @@ class OddsProcessorService:
         Retrieves all upcoming calculated odds with team, league, and odds details.
         """
         retrieval_service = OddsRetrievalService(self.db)
-        calculated_odds = retrieval_service.get_all_calculated_odds()
+        calculated_odds = retrieval_service.get_all_calculated_odds(include_market_data=True)
         return calculated_odds
 
     def get_value_for_money_matches(self) -> List[Dict[str, Any]]:
