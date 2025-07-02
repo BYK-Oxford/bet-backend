@@ -13,7 +13,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "kwQFju03t7uu+QcZpB9UuwM/jawgCPyPplGHw3GNfQs="
+        self.sessionToken = "R6QtrQUhXkRgReA5TugDPpc7Hs230PcywLMsPaGTf2o="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -274,7 +274,7 @@ class BetfairService:
         if not all([home_odds, draw_odds, away_odds]):
             print(f"Incomplete odds for {event_name} - skipping")
             return
-
+        full_event_json = json.dumps(event_dict)
         odds_data = {
             'date': start_time.date(),
             'time': start_time.time(),
@@ -283,7 +283,8 @@ class BetfairService:
             'home_odds': home_odds,
             'draw_odds': draw_odds,
             'away_odds': away_odds,
-            'league_code': league_code
+            'league_code': league_code,
+            'full_market_data': full_event_json
         }
 
         print(f"Saving Odds: {event_name} | H {home_odds} | D {draw_odds} | A {away_odds}")
