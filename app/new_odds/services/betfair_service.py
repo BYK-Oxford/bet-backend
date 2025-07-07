@@ -1,10 +1,11 @@
 import json
 import urllib.request
 import urllib.error
+import pytz
 from datetime import datetime
 from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
-
+from datetime import datetime
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.teams.services.team_service import TeamService
 from app.leagues.services.league_service import LeagueService
@@ -143,12 +144,18 @@ class BetfairService:
                 event = ev['event']
                 event_id = event['id']
                 event_name = event['name']
-                event_time = event['openDate']
+                # event_time = event['openDate']
+                event_time = datetime.strptime(event['openDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                event_time = event_time.replace(tzinfo=pytz.utc)
+                london_time = event_time.astimezone(pytz.timezone("Europe/London"))
+
+                # Drop the timezone and format as string
+                formatted_time = london_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
                 event_dict = {
                     "event_id": event_id,
                     "event_name": event_name,
-                    "start_time": event_time,
+                    "start_time": formatted_time,
                     "markets": []
                 }
 

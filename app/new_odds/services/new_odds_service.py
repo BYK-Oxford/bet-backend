@@ -60,6 +60,7 @@ class NewOddsService:
             existing_odds.home_odds = odds_data['home_odds']
             existing_odds.draw_odds = odds_data['draw_odds']
             existing_odds.away_odds = odds_data['away_odds']
+            existing_odds.time = odds_data['time']
             existing_odds.season_id = season.season_id
             existing_odds.league_id = league.league_id
             existing_odds.full_market_data = odds_data['full_market_data']
