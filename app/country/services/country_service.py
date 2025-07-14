@@ -15,14 +15,13 @@ class CountryService:
             "SC0": "Scotland",
             "SC1": "Scotland",
             "T1": "Turkey",
+            "F1": "France",
             "I1": "Italy",
             "I2": "Italy",
             "SP1": "Spain",
             "SP2": "Spain",
             "D1": "German",
             "D2": "German",
-            "B20":"Brazil",
-            "S2":"Spain"
 
         }
 

@@ -7,17 +7,16 @@ class LeagueService:
     LEAGUE_NAME_MAPPING = {
         'E0': 'English Premier League',
         'E1': 'English Championship',
-        'SC0': 'Scottish Premier League',
+        'SC0': 'Scottish Premiership',
         'SC1': 'Scottish Championship',
-        'T1': 'Süper Lig',
+        'T1': 'Turkish Super League',
+        'F1': 'French Ligue 1',
         'I1': 'Italian Serie A',
         'I2': 'Italian Serie B',
-        'SP1': 'La Liga',
-        'SP2': 'La Liga 2',
+        'SP1': 'Spanish La Liga',
+        'SP2': 'Spanish Segunda',
         'D1': 'German Bundesliga',
         'D2': 'German Bundesliga 2',
-        'B20': 'Brazilian U20',
-        'S2': 'Spanish Segunda Division' 
         # Add more mappings as needed
     }
      

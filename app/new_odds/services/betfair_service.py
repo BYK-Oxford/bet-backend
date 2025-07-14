@@ -14,7 +14,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "R6QtrQUhXkRgReA5TugDPpc7Hs230PcywLMsPaGTf2o="
+        self.sessionToken = "OY5dxj/u3P7H25on3nZUZ/iJScBXRtIbsorvlrYWC4Y="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -322,12 +322,16 @@ class BetfairService:
         league_mapping = {
             "English Premier League": "E0",  # English Premier League
             "English Championship": "E1",  # English Championship
-            "Scottish Premier League": "SC0", # Scottish Premiership
-            "Spanish Segunda": "S2",  # Spanish Segunda
+            "Scottish Premiership": "SC0", # Scottish Premiership
+            "Scottish Championship": "SC1", # Scottish Championship
+            "Spanish La Liga": "SP1",  # Spanish Segunda
+            "Spanish Segunda": "SP2",  # Spanish Segunda
             "German Bundesliga": "D1",  
             "German Bundesliga 2": "D2",  
             "Italian Serie A": "I1",  
             "Italian Serie B": "I2",  
+            "French Ligue 1": "F1",  
+            "Turkish Super League": "T1",  
 
         }
         return league_mapping.get(str(betfair_comp_name))
