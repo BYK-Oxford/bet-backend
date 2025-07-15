@@ -17,16 +17,17 @@ class StandingsService:
             # Extract league name and season year from filename
             filename = file.filename.replace('.csv', '')
             parts = filename.split('_')
+
+            # Assume last two numeric parts are the season years
             season_year = None
-            for i in range(len(parts)-1):
-                if parts[i].isdigit() and parts[i+1].isdigit():
-                    season_year = f"{parts[i]}/{parts[i+1]}"
-                    break
+            if len(parts) >= 2 and parts[-2].isdigit() and parts[-1].isdigit():
+                season_year = f"{parts[-2]}/{parts[-1]}"
+                league_parts = parts[:-2]  # Everything except the last two parts
+            else:
+                league_parts = parts  # Fallback: treat whole filename as league name
 
-            league_name = '_'.join(word for word in filename.split('_') 
-                                   if not any(c.isdigit() for c in word))
-            league_name = ' '.join(word.capitalize() for word in league_name.split('_'))
-
+            # Keep digits in league name (like 'Ligue 1', 'Bundesliga 2')
+            league_name = ' '.join(word.capitalize() for word in league_parts)
             # Read CSV
             contents = await file.read()
             df = pd.read_csv(StringIO(contents.decode("utf-8")))
