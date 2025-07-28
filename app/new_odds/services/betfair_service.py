@@ -14,7 +14,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "OY5dxj/u3P7H25on3nZUZ/iJScBXRtIbsorvlrYWC4Y="
+        self.sessionToken = "zm9wXEhlXZdenmJRRXhaJD3ZMiHoRk+XCNx2ZtYf+wM="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -93,14 +93,17 @@ class BetfairService:
         return self.call_aping(req)
 
     def get_filtered_competitions(self) -> Dict[str, Dict]:
+        # target_names = [
+        #         "English Premier League", "English Championship",
+        #         "Scottish Premiership", "Scottish Championship",
+        #         "Spanish La Liga", "Spanish Segunda",
+        #         "Italian Serie A", "Italian Serie B",
+        #         "German Bundesliga", "German Bundesliga 2", "Turkish Super League", "French Ligue 1"
+        # ]
         target_names = [
-            "English Premier League", "English Championship",
-                "Scottish Premier League", "Scottish Championship",
-                "Spanish La Liga", "Spanish Segunda",
-                "Italian Serie A", "Italian Serie B",
-                "German Bundesliga", "German Bundesliga 2",
-                "Turkish Super Lig",
-        ]
+                "English Premier League"
+                ]
+        
         event_type_id = "1"  # Soccer
         res = self.list_competitions(event_type_id)
         competitions_map = {}

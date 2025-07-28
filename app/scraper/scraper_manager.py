@@ -91,7 +91,10 @@ class ScraperManager:
                 raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
 
             page_content = await get_fishy_page_content(url)
+            print(f"[DEBUG] Got page content for {url} (length={len(page_content)})")
+
             league_data = parse_fishy_league_standing_data(page_content)
+            print(f"[DEBUG] Parsed {len(league_data)} teams from {url}")
 
             for team_standing in league_data:
                 current_league_data = {
