@@ -14,7 +14,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "zm9wXEhlXZdenmJRRXhaJD3ZMiHoRk+XCNx2ZtYf+wM="
+        self.sessionToken = "Jk2B2xqx9n95F0XXGPf/GN2mW22JUN1ex5hS+MPuvus="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -147,18 +147,18 @@ class BetfairService:
                 event = ev['event']
                 event_id = event['id']
                 event_name = event['name']
-                # event_time = event['openDate']
-                event_time = datetime.strptime(event['openDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                event_time = event_time.replace(tzinfo=pytz.utc)
-                london_time = event_time.astimezone(pytz.timezone("Europe/London"))
+                event_time = event['openDate']
+                # event_time = datetime.strptime(event['openDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
+                # event_time = event_time.replace(tzinfo=pytz.utc)
+                # london_time = event_time.astimezone(pytz.timezone("Europe/London"))
 
                 # Drop the timezone and format as string
-                formatted_time = london_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+                # formatted_time = london_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
                 event_dict = {
                     "event_id": event_id,
                     "event_name": event_name,
-                    "start_time": formatted_time,
+                    "start_time": event_time,
                     "markets": []
                 }
 

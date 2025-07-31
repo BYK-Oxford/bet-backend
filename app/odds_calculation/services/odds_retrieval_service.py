@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from datetime import date
+from datetime import datetime, date
 from app.odds_calculation.models.odds_calculation_model import OddsCalculation
 from app.new_odds.models.new_odds_model import NewOdds
 from app.teams.models.team_model import Team
@@ -13,15 +13,28 @@ class OddsRetrievalService:
         """Retrieve all upcoming calculated odds with league & country from NewOdds.
         Optionally include full_market_data for backend use only.
         """
+        
+        now = datetime.now().time()
+        today = date.today()
 
         odds = self.db.query(OddsCalculation).options(
             joinedload(OddsCalculation.home_team),
             joinedload(OddsCalculation.away_team),
-        ).order_by(OddsCalculation.date.desc(), OddsCalculation.time.desc()).limit(50).all()
+        ).filter(
+            (OddsCalculation.date > today) |
+            ((OddsCalculation.date == today) & (OddsCalculation.time > now))
+        ).order_by(
+            OddsCalculation.date.asc(), OddsCalculation.time.asc()
+        ).all()
 
         new_odds = self.db.query(NewOdds).options(
             joinedload(NewOdds.league).joinedload(League.country)
-        ).order_by(NewOdds.date.desc(), NewOdds.time.desc()).limit(50).all()
+        ).filter(
+            (NewOdds.date > today) |
+            ((NewOdds.date == today) & (NewOdds.time > now))
+        ).order_by(
+            NewOdds.date.asc(), NewOdds.time.asc()
+        ).all()
 
         new_odds_lookup = {
             (o.date, o.time, o.home_team_id, o.away_team_id): o
