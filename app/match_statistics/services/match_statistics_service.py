@@ -62,8 +62,6 @@ class MatchStatisticsService:
     def get_historic_matches_between_teams(self, odds_calculation_id: str):
         """Fetch all past matches where home team played as home and away team played as away against each other."""
 
-        from sqlalchemy.orm import aliased
-
         # Step 1: Fetch the OddsCalculation object
         odds_calculation = (
             self.db.query(OddsCalculation)
@@ -124,7 +122,8 @@ class MatchStatisticsService:
 
         if not results:
             return {"message": "No historic match data found for the given odds calculation."}
-
+        
+      
         # Step 3: Format the response
         historic_matches = []
         for row in results:
@@ -162,4 +161,7 @@ class MatchStatisticsService:
             }
             historic_matches.append(match)
 
+        if len(results)>5:
+            historic_matches.pop()
+            
         return historic_matches

@@ -130,11 +130,12 @@ class OddsCalculationService:
         """Fetch and calculate the head-to-head record between two teams."""
         
         # Count the total matches where home_team_id is home and away_team_id is away
-        total_matches = self.db.query(func.count()).filter(
-            (Match.home_team_id == home_team_id) & (Match.away_team_id == away_team_id)
-        ).scalar()
+        total_matches = self.db.query(Match.match_id).filter(
+            Match.home_team_id == home_team_id,
+            Match.away_team_id == away_team_id
+        ).order_by(Match.date.desc()).limit(5).all()
 
-        if total_matches == 0:
+        if len(total_matches) == 0:
             return {
                 "home_wins": 0, "away_wins": 0, "draws": 0,
                 "home_win_ratio": 0.0, "away_win_ratio": 0.0, "draw_ratio": 0.0,
@@ -171,10 +172,10 @@ class OddsCalculationService:
             "home_wins": home_wins,
             "away_wins": away_wins,
             "draws": draws,
-            "total_matches": total_matches,
-            "home_win_ratio": home_wins / total_matches if total_matches > 0 else 0.0,
-            "away_win_ratio": away_wins / total_matches if total_matches > 0 else 0.0,
-            "draw_ratio": draws / total_matches if total_matches > 0 else 0.0
+            "total_matches": len(total_matches),
+            "home_win_ratio": home_wins / len(total_matches) if len(total_matches) > 0 else 0.0,
+            "away_win_ratio": away_wins / len(total_matches) if len(total_matches) > 0 else 0.0,
+            "draw_ratio": draws / len(total_matches) if len(total_matches) > 0 else 0.0
         }
 
 
