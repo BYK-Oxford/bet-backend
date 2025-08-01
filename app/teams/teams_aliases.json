@@ -99,7 +99,7 @@
   "Livingston": ["Livingston", "Livingston FC"],
   "Ross County": ["Ross County", "Ross County FC"],
 
-  "Ayr United": ["Ayr United", "Ayr Utd", "Ayr United FC"],
+  "Ayr United": ["Ayr United", "Ayr Utd", "Ayr United FC", "Ayr"],
   "Dunfermline Athletic": [
     "Dunfermline Athletic",
     "Dunfermline",
@@ -281,7 +281,7 @@
   "Ein Frankfurt": ["Ein Frankfurt", "Eintracht Frankfurt"],
   "Freiburg": ["Freiburg", "SC Freiburg"],
   "Greuther Furth": ["Greuther Furth", "SpVgg Greuther Fürth"],
-  "Hertha": ["Hertha", "Hertha BSC"],
+  "Hertha": ["Hertha", "Hertha BSC", "Hertha Berlin"],
   "Leverkusen": ["Leverkusen", "Bayer 04 Leverkusen", "Bayer Leverkusen"],
   "Hoffenheim": ["Hoffenheim", "Hoffenheim"],
   "Bayern Munich": [
@@ -316,7 +316,7 @@
   "Hannover": ["Hannover", "Hannover 96"],
   "Hamburg": ["Hamburg", "Hamburger SV"],
   "Karlsruhe": ["Karlsruhe", "Karlsruher SC"],
-  "Schalke": ["Schalke", "FC Schalke 04", "FC Schalke"],
+  "Schalke": ["Schalke", "FC Schalke 04", "FC Schalke", "Schalke 04"],
   "Preussen Munster": ["Preussen Munster", "Preussen", "Preußen Münster"],
   "Elversberg": ["Elversberg", "SV 07 Elversberg", "SV Elversberg"],
   "SSV Ulm": ["SSV Ulm", "SSV Ulm 1846", "Ulm"],

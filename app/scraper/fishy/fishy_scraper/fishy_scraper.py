@@ -20,7 +20,7 @@ async def get_fishy_page_content(url):
 def parse_fishy_league_standing_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')
     standings_data = []
-    
+
     # Extract year from caption and format it
     caption = soup.find('caption')
     if caption:
@@ -28,24 +28,37 @@ def parse_fishy_league_standing_data(page_content):
         formatted_year = year_text.replace('-', '/')  # Convert to yyyy/yyyy format
     else:
         formatted_year = "Unknown"
-    
+
     rows = soup.find_all('tr', class_='cats2')
-    found_first_table = False  # To track if we have already processed a table
+    manual_position = 1
+    found_first_table = False
 
     for row in rows:
         cols = row.find_all('td')
 
-        if len(cols) >= 19:
-            position = cols[0].text.strip()
+        if len(cols) >= 20:
+            pos_text = cols[0].text.strip()
 
-            # Start collecting data when we first encounter position "1"
+            # Inject position manually if missing
+            if pos_text == "":
+                position = str(manual_position)
+                manual_position += 1
+            else:
+                position = pos_text
+                manual_position = int(position) + 1  # Reset counter in case HTML has real numbers
+
+            # Start on first table only
             if position == "1":
                 if found_first_table:
-                    break  # Stop when we see "1" again (new table detected)
-                found_first_table = True  # Mark that we've found the first table
-            
+                    break  # New table starts, stop collecting
+                found_first_table = True
+
             if found_first_table:
-                team_name = cols[1].find('a').text.strip()
+                try:
+                    team_name = cols[1].find('a').text.strip()
+                except AttributeError:
+                    continue  # Skip if team name link not found
+
                 played = cols[2].text.strip()
                 wins = cols[13].text.strip()
                 draws = cols[14].text.strip()

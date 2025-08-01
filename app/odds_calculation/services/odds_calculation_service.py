@@ -19,18 +19,24 @@ class OddsCalculationService:
         results = []
 
         for match in new_matches:
-            odds_data = await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
+            print(f"[LOG] Processing match_id: {match.new_odds_id}, Home: {match.home_team_id}, Away: {match.away_team_id}, Date: {match.date}")
 
-            if odds_data:  # Ensure the calculation is valid before saving
+            odds_data = await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
+            if not odds_data:
+                    print(f"[WARN] No odds returned for match_id: {match.new_odds_id}")
+                    continue
+            try:
                 saved_entry = self.odds_saving_service.save_calculated_odds(
                     date=match.date,
                     time=match.time,
-                    home_team_id=match.home_team_id, 
-                    away_team_id=match.away_team_id, 
+                    home_team_id=match.home_team_id,
+                    away_team_id=match.away_team_id,
                     odds_data=odds_data
                 )
-                results.append(saved_entry)  # Append each saved entry
-
+                print(f"[LOG] Odds saved for match_id: {match.new_odds_id}")
+                results.append(saved_entry)
+            except Exception as e:
+                print(f"[ERROR] Failed to save odds for match_id: {match.new_odds_id}. Error: {e}")
         return results
 
 
@@ -38,9 +44,13 @@ class OddsCalculationService:
         """Calculate win, draw, and loss ratios for a single match."""
         season = self.db.query(Season).filter(Season.season_id == season_id).first()
         if not season:
+            print(f"[WARN] No season found for season_id: {season_id}")
             return None
 
         last_season = self.db.query(Season).filter(Season.season_year == self.get_previous_season_year(season.season_year)).first()
+        last_season = self.db.query(Season).filter(Season.season_year == self.get_previous_season_year(season.season_year)).first()
+        if not last_season:
+            print(f"[WARN] No previous season found for year: {self.get_previous_season_year(season.season_year)}")
         last_season_id = last_season.season_id if last_season else None
 
         # Gather data for head-to-head, current season, and last season
@@ -85,9 +95,16 @@ class OddsCalculationService:
     async def get_team_data(self, team_id: str, season_id: str, last_season_id: str, is_home: bool):
         """Retrieve team data including current and previous season performance."""
         team = self.db.query(Team).filter(Team.team_id == team_id).first()
+        if not team:
+            print(f"[ERROR] No team found for team_id: {team_id}")
+            return {}
 
         current_performance = await self.get_team_season_performance(team_id, season_id)
+        if not current_performance or current_performance['total_played'] == 0:
+            print(f"[WARN] No current season performance for team_id: {team_id}")
         last_performance = await self.get_team_season_performance(team_id, last_season_id) if last_season_id else None
+        if not last_performance or last_performance['total_played'] == 0:
+            print(f"[WARN] No last season performance for team_id: {team_id}")
 
         team_data = {
             "team_id": team_id,

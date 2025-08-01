@@ -1,3 +1,9 @@
 {
-  "thefishy": ["https://thefishy.co.uk/leaguetable.php?table=1"]
+  "thefishy": [
+    "https://thefishy.co.uk/leaguetable.php?table=1",
+    "https://thefishy.co.uk/leaguetable.php?table=2",
+    "https://thefishy.co.uk/leaguetable.php?table=10",
+    "https://thefishy.co.uk/leaguetable.php?table=11",
+    "https://thefishy.co.uk/leaguetable.php?table=82"
+  ]
 }

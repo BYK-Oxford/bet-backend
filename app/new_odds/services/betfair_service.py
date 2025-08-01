@@ -14,7 +14,7 @@ class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "Jk2B2xqx9n95F0XXGPf/GN2mW22JUN1ex5hS+MPuvus="
+        self.sessionToken = "8vCYkAhDKrpc8QA28TkRI4gw/VuzcXneAeytnwS1Cwo="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
         
         # Initialize services
@@ -101,7 +101,8 @@ class BetfairService:
         #         "German Bundesliga", "German Bundesliga 2", "Turkish Super League", "French Ligue 1"
         # ]
         target_names = [
-                "English Premier League"
+                "English Premier League","English Championship","Scottish Premiership","Scottish Championship",
+                "German Bundesliga 2",
                 ]
         
         event_type_id = "1"  # Soccer

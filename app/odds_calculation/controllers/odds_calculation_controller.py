@@ -38,6 +38,7 @@ async def calculate_ratios(db: Session = Depends(get_db)):
         # Get future matches
         current_time = datetime.now()
         new_matches = new_odds_service.get_upcoming_matches(current_time)
+        print(f"[LOG] Total upcoming matches fetched: {len(new_matches)}")
 
         if not new_matches:
             return {"message": "No upcoming matches found for ratio calculation."}

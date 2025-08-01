@@ -14,7 +14,7 @@ class NewOddsService:
 
     def get_upcoming_matches(self, current_time: datetime):
         """Fetches all upcoming matches based on system date and time."""
-        return self.db.query(NewOdds).filter(NewOdds.date > current_time.date()).all()
+        return self.db.query(NewOdds).filter(NewOdds.date >= current_time.date()).all()
 
     def _find_matching_league(self, league_code: str) -> League:
         """Find the matching league using league_code."""
