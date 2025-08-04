@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.request
 import urllib.error
 import pytz
@@ -340,4 +341,118 @@ class BetfairService:
         }
         return league_mapping.get(str(betfair_comp_name))
 
-    
+    def get_live_games_by_league(self) -> list[dict]:
+        """
+        Get all in-play football games from selected leagues with odds and URLs.
+
+        Returns:
+            List of dicts: {
+                "event_id": str,
+                "standard_url": str,
+                "exchange_url": str,
+                "home_odds": str,
+                "draw_odds": str,
+                "away_odds": str
+            }
+        """
+        from math import ceil
+
+        def slugify(text):
+            text = text.lower()
+            text = text.replace("&", "and")
+            text = re.sub(r"[\'()]", "-", text)
+            text = re.sub(r"[^a-z0-9\s-]", "", text)
+            text = re.sub(r"\s+", "-", text)
+            text = re.sub(r"-{2,}", "-", text)
+            return text.strip("-")
+        
+        
+        selected_league_names = [v["name"] for v in self.get_filtered_competitions().values()] 
+
+        # Step 1: List all in-play football MATCH_ODDS markets
+        req = {
+            "jsonrpc": "2.0",
+            "method": "SportsAPING/v1.0/listMarketCatalogue",
+            "params": {
+                "filter": {
+                    "eventTypeIds": ["1"],  # Soccer
+                    "inPlayOnly": True,
+                    "marketTypeCodes": ["MATCH_ODDS"]
+                },
+                "maxResults": 100,
+                "marketProjection": ["COMPETITION", "EVENT", "MARKET_START_TIME", "RUNNER_DESCRIPTION"]
+            },
+            "id": 7
+        }
+
+        res = self.call_aping(req)
+        if not res or "result" not in res or len(res["result"]) == 0:
+            print("⚠️ No in-play markets found.")
+            return []
+
+        market_ids = [market["marketId"] for market in res["result"]]
+        market_book_map = {}
+        chunk_size = 40
+
+        # Step 2: Get price data for each market
+        for i in range(0, len(market_ids), chunk_size):
+            chunk = market_ids[i:i + chunk_size]
+            books = self.list_market_book(chunk)
+            if books and "result" in books:
+                for book in books["result"]:
+                    market_book_map[book["marketId"]] = book
+
+        # Step 3: Process and filter results
+        live_games = []
+        for market in res["result"]:
+            comp_name = market.get('competition', {}).get('name', '').strip()
+            if not comp_name:
+                continue
+
+            if not any(comp_name.lower() == league.lower() for league in selected_league_names):
+                continue
+
+            event = market["event"]
+            runners = market["runners"]
+            market_id = market["marketId"]
+            event_id = event["id"]
+
+            comp_slug = slugify(comp_name)
+            match_slug = slugify(event["name"])
+
+            standard_url = f"https://www.betfair.com/betting/football/{comp_slug}/{match_slug}/e-{event_id}"
+            exchange_url = f"https://www.betfair.com/exchange/plus/en/football/{comp_slug}/{match_slug}-betting-{event_id}"
+
+            book = market_book_map.get(market_id)
+            if not book:
+                continue
+
+            runner_odds = {}
+            for runner in runners:
+                selection_id = runner["selectionId"]
+                runner_name = runner["runnerName"]
+                runner_book = next((r for r in book["runners"] if r["selectionId"] == selection_id), None)
+
+                if runner_book:
+                    backs = runner_book.get("ex", {}).get("availableToBack", [])
+                    best_back_price = f"{backs[0]['price']}" if backs else "N/A"
+                    runner_odds[runner_name.lower()] = best_back_price
+
+            # Ensure we have all three: home, draw, away
+            home, draw, away = "N/A", "N/A", "N/A"
+            if len(runners) == 3:
+                home = runner_odds.get(runners[0]["runnerName"].lower(), "N/A")
+                draw = runner_odds.get(runners[1]["runnerName"].lower(), "N/A")
+                away = runner_odds.get(runners[2]["runnerName"].lower(), "N/A")
+
+            game_data = {
+                "event_id": event_id,
+                "standard_url": standard_url,
+                "exchange_url": exchange_url,
+                "home_odds": home,
+                "draw_odds": draw,
+                "away_odds": away,
+            }
+            live_games.append(game_data)
+
+        return live_games

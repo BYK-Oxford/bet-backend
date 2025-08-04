@@ -126,36 +126,17 @@ class ScraperManager:
         
 
 
-    async def _run_betfair_scraper(self, url, odds_calculation_id):
+    async def _run_betfair_scraper(self, url):
         try:
             # Fetch page content with Selenium
             page_content = get_betfair_page_content_selenium(url)
-            
+
             # Parse data from page content
             match_data = parse_betfair_match_data(page_content)
-            
-            # Debug print
+
             print(f"[DEBUG] Parsed Betfair match data: {match_data}")
-
-            # Save/update live game data in DB
-            live_game = self.live_game_service.create_live_game_data(
-                odds_calculation_id=odds_calculation_id,
-                is_live=True,
-                scrape_url=url,
-                live_home_score=int(match_data.get("Home Score", 0)),
-                live_away_score=int(match_data.get("Away Score", 0)),
-                match_time=match_data.get("Time"),  # e.g., "27'"
-                live_home_odds=None,  # No data provided, so None
-                live_draw_odds=None,
-                live_away_odds=None,
-                shots_on_target_home=int(match_data.get("Stats", {}).get("Shots On Target", {}).get("Home", 0)),
-                shots_on_target_away=int(match_data.get("Stats", {}).get("Shots On Target", {}).get("Away", 0)),
-                corners_home=int(match_data.get("Stats", {}).get("Corner", {}).get("Home", 0)),
-                corners_away=int(match_data.get("Stats", {}).get("Corner", {}).get("Away", 0)),
-            )
-
-            return "Betfair Scraping: Success"
-
+            return match_data
 
         except Exception as e:
-            return f"Betfair Scraping: Failed - {str(e)}"
+            print(f"[ERROR] Betfair scraping failed: {e}")
+            return None
