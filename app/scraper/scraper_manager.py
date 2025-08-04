@@ -1,14 +1,17 @@
 from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_odds_page_content, parse_match_data
 from app.scraper.fishy.fishy_scraper.fishy_scraper import get_fishy_page_content, parse_fishy_league_standing_data
+from app.scraper.betfair.betfair_scraper.betfair_scraper import get_betfair_page_content_selenium, parse_betfair_match_data  # You'll need to put your Betfair functions in this module
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
 from app.teams.services.team_service import TeamService
+from app.live_data.services.live_game_date_service import LiveGameDataService
 from sqlalchemy.orm import Session
 
 class ScraperManager:
     def __init__(self, scraper_name, db: Session):
         self.scraper_name = scraper_name
         self.new_odds_service = NewOddsService(db)
+        self.live_game_service = LiveGameDataService(db)
         self.current_league_service = CurrentLeagueService(db)
         self.team_service = TeamService(db)
         
@@ -48,6 +51,8 @@ class ScraperManager:
             return self._run_oddsportal_scraper(url)
         elif self.scraper_name == 'thefishy':
             return self._run_fishy_scraper(url)
+        # elif self.scraper_name == 'betfair':
+        #     return self._run_betfair_scraper(url)
         else:
             raise ValueError("Unsupported scraper name")
     
@@ -118,3 +123,39 @@ class ScraperManager:
             return "TheFishy Scraping: Success"
         except Exception as e:
             return f"TheFishy Scraping: Failed - {str(e)}"
+        
+
+
+    async def _run_betfair_scraper(self, url, odds_calculation_id):
+        try:
+            # Fetch page content with Selenium
+            page_content = get_betfair_page_content_selenium(url)
+            
+            # Parse data from page content
+            match_data = parse_betfair_match_data(page_content)
+            
+            # Debug print
+            print(f"[DEBUG] Parsed Betfair match data: {match_data}")
+
+            # Save/update live game data in DB
+            live_game = self.live_game_service.create_live_game_data(
+                odds_calculation_id=odds_calculation_id,
+                is_live=True,
+                scrape_url=url,
+                live_home_score=int(match_data.get("Home Score", 0)),
+                live_away_score=int(match_data.get("Away Score", 0)),
+                match_time=match_data.get("Time"),  # e.g., "27'"
+                live_home_odds=None,  # No data provided, so None
+                live_draw_odds=None,
+                live_away_odds=None,
+                shots_on_target_home=int(match_data.get("Stats", {}).get("Shots On Target", {}).get("Home", 0)),
+                shots_on_target_away=int(match_data.get("Stats", {}).get("Shots On Target", {}).get("Away", 0)),
+                corners_home=int(match_data.get("Stats", {}).get("Corner", {}).get("Home", 0)),
+                corners_away=int(match_data.get("Stats", {}).get("Corner", {}).get("Away", 0)),
+            )
+
+            return "Betfair Scraping: Success"
+
+
+        except Exception as e:
+            return f"Betfair Scraping: Failed - {str(e)}"
