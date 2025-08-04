@@ -21,8 +21,9 @@ class OddsRetrievalService:
             joinedload(OddsCalculation.home_team),
             joinedload(OddsCalculation.away_team),
         ).filter(
-            (OddsCalculation.date > today) |
-            ((OddsCalculation.date == today) & (OddsCalculation.time > now))
+            (OddsCalculation.date >= today) 
+            # |
+            # ((OddsCalculation.date == today) & (OddsCalculation.time > now))
         ).order_by(
             OddsCalculation.date.asc(), OddsCalculation.time.asc()
         ).all()
@@ -30,8 +31,9 @@ class OddsRetrievalService:
         new_odds = self.db.query(NewOdds).options(
             joinedload(NewOdds.league).joinedload(League.country)
         ).filter(
-            (NewOdds.date > today) |
-            ((NewOdds.date == today) & (NewOdds.time > now))
+            (NewOdds.date >= today) 
+            # |
+            # ((NewOdds.date == today) & (NewOdds.time > now))
         ).order_by(
             NewOdds.date.asc(), NewOdds.time.asc()
         ).all()

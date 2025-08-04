@@ -36,5 +36,6 @@ def init_db():
     from app.current_league.models.current_league_model import CurrentLeague
     from app.new_odds.models.new_odds_model import NewOdds
     from app.odds_calculation.models.odds_calculation_model import OddsCalculation
+    from app.live_data.models.live_game_data import LiveGameData
     
     Base.metadata.create_all(bind=engine)

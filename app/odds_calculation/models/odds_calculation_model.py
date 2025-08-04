@@ -18,3 +18,7 @@ class OddsCalculation(Base):
     
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_calculated_odds")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_calculated_odds")
+
+
+    live_data = relationship("LiveGameData", uselist=False, back_populates="odds_calculation")
+
