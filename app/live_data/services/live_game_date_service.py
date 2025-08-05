@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-import json
+from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app.live_data.models.live_game_data import LiveGameData  # your model import path
@@ -7,7 +7,10 @@ from app.odds_calculation.models.odds_calculation_model import OddsCalculation  
 from app.new_odds.models.new_odds_model import NewOdds  # if needed for validation
 from app.teams.models.team_model import Team
 from app.scraper.scraper_manager import ScraperManager
-from new_odds.services.betfair_service import BetfairService
+from app.new_odds.services.betfair_service import BetfairService
+import json
+
+
 class LiveGameDataService:
     def __init__(self, db: Session):
         self.db = db
@@ -79,32 +82,30 @@ class LiveGameDataService:
     def get_live_game_data(self, odds_calculation_id: str) -> LiveGameData | None:
         return self.db.query(LiveGameData).filter_by(odds_calculation_id=odds_calculation_id).first()
 
-    def trigger_live_data_scrape(self, odds_calculation_id: str):
+    def trigger_live_data_scrape(self, odds_calculation_id: str, scrape_url: str):
         """
-        Trigger the scraping service/class to fetch live data for given odds_calculation_id.
-        This method just calls the external scraper and updates the DB accordingly.
+        Trigger the scraper using the provided scrape_url and update or create live game data
+        using the given odds_calculation_id.
         """
-        # Step 1: Fetch the current live game entry
-        live_data = self.get_live_game_data(odds_calculation_id)
-        if not live_data or not live_data.scrape_url:
-            raise ValueError(f"No scrape_url found for odds_calculation_id {odds_calculation_id}")
+        if not odds_calculation_id or not scrape_url:
+            raise ValueError("Both odds_calculation_id and scrape_url must be provided.")
 
-        # Step 2: Trigger the scraper
+        # Run the scraper
         scraper = ScraperManager()
-        scraped_data = scraper._run_betfair_scraper(url=live_data.scrape_url)
+        scraped_data = scraper._run_betfair_scraper(url=scrape_url)
 
         if not scraped_data:
             raise ValueError("Scraping failed or returned no data")
 
-        # Update the live game data in DB using your existing method
-        updated_live_data = self.create_live_game_data(
+        # Perform create or update (your create_live_game_data should handle upsert logic)
+        self.create_live_game_data(
             odds_calculation_id=odds_calculation_id,
             is_live=True,
-            scrape_url=live_data.scrape_url,
+            scrape_url=scrape_url,
             live_home_score=int(scraped_data.get("Home Score", 0)),
             live_away_score=int(scraped_data.get("Away Score", 0)),
             match_time=scraped_data.get("Time"),
-            live_home_odds=None,  # Set if available
+            live_home_odds=None,
             live_draw_odds=None,
             live_away_odds=None,
             shots_on_target_home=int(scraped_data.get("Stats", {}).get("Shots On Target", {}).get("Home", 0)),
@@ -113,48 +114,47 @@ class LiveGameDataService:
             corners_away=int(scraped_data.get("Stats", {}).get("Corner", {}).get("Away", 0)),
         )
 
-        return updated_live_data
-    
 
-    def is_game_live(self, odds_calculation_id: str) -> bool:
+    def check_and_update_live_games(self):
         """
-        Determine if the given odds_calculation_id corresponds to a currently live game.
+        Check all today's games and trigger live data scraping for games that are live.
         """
-        # Step 1: Fetch odds calculation
-        odds_calc = self.db.query(OddsCalculation).filter_by(odds_calculation_id=odds_calculation_id).first()
-        if not odds_calc:
-            raise ValueError(f"OddsCalculation with ID {odds_calculation_id} not found.")
+        today = date.today()
 
-        # Step 2: Fetch home and away team names
-        home_team = odds_calc.home_team_id
-        away_team = odds_calc.away_team_id
-        date = odds_calc.date
+        # Step 1: Fetch all OddsCalculation entries for today
+        todays_odds_calculations = self.db.query(OddsCalculation).filter(OddsCalculation.date == today).all()
+        if not todays_odds_calculations:
+            print("No odds calculations found for today.")
+            return
 
-        # Step 3: Fetch related NewOdds object and parse full_market_data
-        new_odds = self.db.query(NewOdds).filter(
+        # Step 2: Get all live games from Betfair
+        live_games = self.betfafairService.get_live_games_by_league()
+        live_games_dict = {str(game.get("event_id")): game for game in live_games if game.get("event_id")}
+
+        # Step 3: Iterate and check for matches
+        for odds_calc in todays_odds_calculations:
+            new_odds = self.db.query(NewOdds).filter(
                 and_(
                     NewOdds.home_team_id == odds_calc.home_team_id,
                     NewOdds.away_team_id == odds_calc.away_team_id,
                     NewOdds.date == odds_calc.date
                 )
             ).first()
-        if not new_odds:
-            raise ValueError(f"No NewOdds entry found for OddsCalculation ID {odds_calculation_id}.")
 
-        try:
-            market_data = json.loads(new_odds.full_market_data)
-        except Exception as e:
-            raise ValueError("Failed to parse full_market_data JSON.") from e
+            if not new_odds:
+                continue
 
-        event_id = market_data.get("event_id")
-        if not event_id:
-            raise ValueError("event_id not found in full_market_data.")
+            try:
+                market_data = json.loads(new_odds.full_market_data)
+                event_id = str(market_data.get("event_id"))
+            except Exception:
+                continue
 
-        # Step 4: Fetch live games and check for event_id match
-        live_games = self.betfafairService.get_live_games_by_league()
-        for game in live_games:
-            if str(game.get("event_id")) == str(event_id):
-                return True
-
-        return False
-
+            live_game = live_games_dict.get(event_id)
+            if live_game:
+                standard_url = live_game.get("standard_url")
+                try:
+                    self.trigger_live_data_scrape(odds_calculation_id=odds_calc.odds_calculation_id, scrape_url=standard_url)
+                    print(f"Live data scraped and saved for event_id: {event_id}")
+                except Exception as e:
+                    print(f"Error scraping live data for event_id {event_id}: {str(e)}")

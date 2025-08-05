@@ -4,14 +4,12 @@ from app.scraper.betfair.betfair_scraper.betfair_scraper import get_betfair_page
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
 from app.teams.services.team_service import TeamService
-from app.live_data.services.live_game_date_service import LiveGameDataService
 from sqlalchemy.orm import Session
 
 class ScraperManager:
     def __init__(self, scraper_name, db: Session):
         self.scraper_name = scraper_name
         self.new_odds_service = NewOddsService(db)
-        self.live_game_service = LiveGameDataService(db)
         self.current_league_service = CurrentLeagueService(db)
         self.team_service = TeamService(db)
         
@@ -51,8 +49,6 @@ class ScraperManager:
             return self._run_oddsportal_scraper(url)
         elif self.scraper_name == 'thefishy':
             return self._run_fishy_scraper(url)
-        # elif self.scraper_name == 'betfair':
-        #     return self._run_betfair_scraper(url)
         else:
             raise ValueError("Unsupported scraper name")
     

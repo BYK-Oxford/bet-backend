@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, date
 from app.odds_calculation.models.odds_calculation_model import OddsCalculation
+from app.live_data.services.live_game_date_service import LiveGameDataService
 from app.new_odds.models.new_odds_model import NewOdds
 from app.teams.models.team_model import Team
 from app.leagues.models.leagues_models import League
@@ -8,6 +9,7 @@ from app.leagues.models.leagues_models import League
 class OddsRetrievalService:
     def __init__(self, db: Session):
         self.db = db
+        self.live_data_service = LiveGameDataService(db)
 
     def get_all_calculated_odds(self, include_market_data: bool = False):
         """Retrieve all upcoming calculated odds with league & country from NewOdds.
@@ -21,9 +23,8 @@ class OddsRetrievalService:
             joinedload(OddsCalculation.home_team),
             joinedload(OddsCalculation.away_team),
         ).filter(
-            (OddsCalculation.date >= today) 
-            # |
-            # ((OddsCalculation.date == today) & (OddsCalculation.time > now))
+            (OddsCalculation.date >= today)|
+            ((OddsCalculation.date == today) & (OddsCalculation.time > now))
         ).order_by(
             OddsCalculation.date.asc(), OddsCalculation.time.asc()
         ).all()
@@ -31,9 +32,8 @@ class OddsRetrievalService:
         new_odds = self.db.query(NewOdds).options(
             joinedload(NewOdds.league).joinedload(League.country)
         ).filter(
-            (NewOdds.date >= today) 
-            # |
-            # ((NewOdds.date == today) & (NewOdds.time > now))
+            (NewOdds.date >= today)|
+            ((NewOdds.date == today) & (NewOdds.time > now))
         ).order_by(
             NewOdds.date.asc(), NewOdds.time.asc()
         ).all()
@@ -47,6 +47,7 @@ class OddsRetrievalService:
 
         for o in odds:
             original = new_odds_lookup.get((o.date, o.time, o.home_team_id, o.away_team_id))
+            live_data = self.live_data_service.get_live_game_data(o.odds_calculation_id)
             
             data = {
                 "odds_calculation_id": o.odds_calculation_id,
@@ -75,6 +76,24 @@ class OddsRetrievalService:
 
             if include_market_data:
                 data["full_market_data"] = original.full_market_data if original else None
+            
+            # ✅ Attach live data if it exists
+            if live_data:
+                data["live_data"] = {
+                    "is_live": live_data.is_live,
+                    "scrape_url": live_data.scrape_url,
+                    "live_home_score": live_data.live_home_score,
+                    "live_away_score": live_data.live_away_score,
+                    "match_time": live_data.match_time,
+                    "live_home_odds": live_data.live_home_odds,
+                    "live_draw_odds": live_data.live_draw_odds,
+                    "live_away_odds": live_data.live_away_odds,
+                    "shots_on_target_home": live_data.shots_on_target_home,
+                    "shots_on_target_away": live_data.shots_on_target_away,
+                    "corners_home": live_data.corners_home,
+                    "corners_away": live_data.corners_away,
+                    "last_updated": live_data.last_updated.isoformat() if live_data.last_updated else None
+                }
 
             enriched.append(data)
 

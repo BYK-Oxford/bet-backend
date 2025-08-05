@@ -1,23 +1,14 @@
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 import asyncio
-import httpx
 import logging
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+from app.live_data.services.live_game_date_service import LiveGameDataService
+from app.core.database import SessionLocal
+import httpx
 
 logger = logging.getLogger(__name__)
 
-def start_scheduler():
-    scheduler = BackgroundScheduler()
-
-    # CronTrigger: At 02:30 AM every day
-    trigger = CronTrigger(hour=2, minute=30)
-
-    @scheduler.scheduled_job(trigger)
-    def scheduled_scrape():
-        asyncio.run(call_scraper_api())
-
-    scheduler.start()
-    logger.info("✅ Scheduler started")
 
 async def call_scraper_api():
     base_url = "https://bet-backend-1.onrender.com"
@@ -25,25 +16,24 @@ async def call_scraper_api():
 
     async with httpx.AsyncClient() as client:
         try:
-            # 1️⃣ Step 1: Trigger oddsportal scraper
-            odds_response = await client.post(
-                f"{base_url}/odds/scrape-new-odds/",
-                json={"scraper_name": "oddsportal"},
+            # 🔵 Step 1: Betfair Odds
+            betfair_response = await client.post(
+                f"{base_url}/betfair-odds/betfair-odds/",
                 headers=headers
             )
-            logger.info(f"📨 Step 1: scrape-new-odds - {odds_response.status_code}")
-            await asyncio.sleep(5)  # 💤 Breathing room (5 seconds)
+            logger.info(f"📨 Step 1: betfair-odds - {betfair_response.status_code}")
+            await asyncio.sleep(5)
 
-            # 2️⃣ Step 2: Trigger current league standing scraper
+            # Step 2: League table scraper
             league_response = await client.post(
                 f"{base_url}/current-league/scrape-current-league/",
                 json={"scraper_name": "thefishy"},
                 headers=headers
             )
             logger.info(f"📨 Step 2: scrape-current-league - {league_response.status_code}")
-            await asyncio.sleep(5)  # 💤 Breathing room (5 seconds)
+            await asyncio.sleep(5)
 
-            # 3️⃣ Step 3: Trigger odds calculation
+            # Step 3: Odds calculation
             calc_response = await client.post(
                 f"{base_url}/odds-calculation/calculate-ratios/",
                 headers=headers
@@ -52,3 +42,32 @@ async def call_scraper_api():
 
         except Exception as e:
             logger.error(f"❌ Error in scheduled scraping chain: {e}")
+
+
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+
+    # 🔁 Job 1: Live game update
+    @scheduler.scheduled_job(IntervalTrigger(minutes=5))
+    def scheduled_live_update():
+        logger.info("🔁 Running scheduled check_and_update_live_games()")
+        db = SessionLocal()
+        service = LiveGameDataService(db=db)
+        try:
+            service.check_and_update_live_games()
+        except Exception as e:
+            logger.error(f"❌ Error in live update scheduler: {e}")
+        finally:
+            db.close()
+
+   # 🔁 Job 2: Scraper job (runs Tue & Thu at 1:00 PM)
+    @scheduler.scheduled_job(CronTrigger(day_of_week="tue,thu", hour=13, minute=0))
+    def scheduled_scraper_call():
+        logger.info("🔁 Running scheduled scraper API calls (Tue/Thu at 1PM)")
+        try:
+            asyncio.run(call_scraper_api())
+        except Exception as e:
+            logger.error(f"❌ Error running scheduled scraper call: {e}")
+
+    scheduler.start()
+    logger.info("✅ Scheduler started with live update + scraper jobs")
