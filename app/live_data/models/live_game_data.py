@@ -35,4 +35,4 @@ class LiveGameData(Base):
     last_updated = Column(DateTime, nullable=True)
 
     # Relationship to OddsCalculation
-    odds_calculation = relationship("OddsCalculation", backref="live_game_data")
+    odds_calculation = relationship("OddsCalculation", back_populates="live_data")
