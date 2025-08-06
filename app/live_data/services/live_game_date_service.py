@@ -97,10 +97,14 @@ class LiveGameDataService:
         if not scraped_data:
             raise ValueError("Scraping failed or returned no data")
 
+        # Check if match time is FT (Full Time)
+        match_time = scraped_data.get("Time")
+        is_live_status = False if match_time and match_time.strip().upper() == "FT" else True
+
         # Perform create or update (your create_live_game_data should handle upsert logic)
         self.create_live_game_data(
             odds_calculation_id=odds_calculation_id,
-            is_live=True,
+            is_live=is_live_status,
             scrape_url=scrape_url,
             live_home_score=int(scraped_data.get("Home Score", 0)),
             live_away_score=int(scraped_data.get("Away Score", 0)),

@@ -69,5 +69,14 @@ def start_scheduler():
         except Exception as e:
             logger.error(f"❌ Error running scheduled scraper call: {e}")
 
+    
+     # 🔁 Job 3: Test print job every 5 minutes (for testing scheduler)
+    @scheduler.scheduled_job(IntervalTrigger(minutes=5))
+    def scheduled_test_print():
+        logger.info("-------------------------")
+        logger.info("!!!! This is testing and printing scheduler !!!!")
+        logger.info("-------------------------")
+        
+
     scheduler.start()
     logger.info("✅ Scheduler started with live update + scraper jobs")
