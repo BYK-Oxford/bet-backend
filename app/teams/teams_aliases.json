@@ -107,7 +107,7 @@
   ],
   "Partick Thistle": ["Partick Thistle", "Partick", "Partick Thistle FC"],
   "Queen's Park": ["Queen's Park", "Queens Park", "Queen's Park FC"],
-  "Raith Rovers": ["Raith Rovers", "Raith", "Raith Rovers FC"],
+  "Raith Rovers": ["Raith Rovers", "Raith", "Raith Rovers FC", "Raith Rvs"],
   "Inverness Caledonian Thistle": [
     "Inverness Caledonian Thistle",
     "Inverness",
@@ -119,7 +119,12 @@
   "Alanyaspor": ["Alanyaspor"],
   "Antalyaspor": ["Antalyaspor"],
   "Besiktas": ["Besiktas"],
-  "Buyuksehir Belediye Erzurumspor": ["Buyuksehyr", "Buyuksehir"],
+  "Buyuksehir Belediye Erzurumspor": [
+    "Buyuksehyr",
+    "Buyuksehir",
+    "Erzurumspor",
+    "Buyuksehir Belediye Erzurumspor"
+  ],
   "Caykur Rizespor": ["Caykur Rizespor", "Rizespor"],
   "Eyupspor": ["Eyupspor"],
   "Fenerbahce": ["Fenerbahce", "Fenerbahçe"],
@@ -129,7 +134,7 @@
   "Hatayspor": ["Hatayspor"],
   "Istanbul Basaksehir": ["Istanbul Basaksehir", "Basaksehir", "Buyuksehyr"],
   "Istanbulspor": ["Istanbulspor"],
-  "Karagumruk": ["Karagumruk"],
+  "Karagumruk": ["Karagumruk", "Fatih Karagumruk", "Fatih Karagumruk Istanbul"],
   "Kasimpasa": ["Kasimpasa"],
   "Kayserispor": ["Kayserispor"],
   "Konyaspor": ["Konyaspor"],
@@ -137,7 +142,9 @@
   "Samsunspor": ["Samsunspor"],
   "Sivasspor": ["Sivasspor"],
   "Trabzonspor": ["Trabzonspor"],
+  "Kocaelispor": ["Kocaelispor"],
   "Ankaragucu": ["Ankaragucu"],
+  "Genclerbirligi": ["Genclerbirligi"],
   "Bodrum FK": ["Bodrum FK", "Bodrum", "Bodrumspor"],
 
   "Atalanta": ["Atalanta", "Atalanta Bergamasca Calcio"],
@@ -197,7 +204,7 @@
 
   "Valencia": ["Valencia", "Valencia CF"],
   "Cadiz": ["Cadiz", "Cadiz CF"],
-  "Mallorca": ["Mallorca", "RCD Mallorca"],
+  "Mallorca": ["Mallorca", "RCD Mallorca", "Real Mallorca"],
   "Alaves": ["Alaves", "Deportivo Alaves"],
   "Osasuna": ["Osasuna", "CA Osasuna"],
   "Celta": ["Celta", "Celta de Vigo", "Celta Vigo"],
@@ -230,7 +237,7 @@
   "Sociedad B": ["Sociedad B", "Real Sociedad B"],
   "Girona": ["Girona", "Girona FC"],
   "Ponferradina": ["Ponferradina", "SD Ponferradina"],
-  "Sp Gijon": ["Sp Gijon", "Real Sporting de Gijón"],
+  "Sp Gijon": ["Sp Gijon", "Real Sporting de Gijón", "Gijon"],
   "Oviedo": ["Oviedo", "Real Oviedo", "R. Oviedo"],
   "Fuenlabrada": ["Fuenlabrada", "CF Fuenlabrada"],
   "Malaga": ["Malaga", "Malaga CF"],
@@ -244,7 +251,7 @@
   "Mirandes": ["Mirandes", "CD Mirandés"],
   "Amorebieta": ["Amorebieta", "SD Amorebieta"],
   "Burgos": ["Burgos", "Burgos CF"],
-  "Racing Santander": ["Racing Santander", "Racing de Santander"],
+  "Racing Santander": ["Racing Santander", "Racing de Santander", "Santander"],
   "Deportivo La Coruna": [
     "Deportivo La Coruna",
     "Deportivo de La Coruna",
@@ -257,7 +264,8 @@
   "Racing DE Ferrol": [
     "Racing DE Ferrol",
     "Racing Club de Ferrol",
-    "Racing Club Ferrol"
+    "Racing Club Ferrol",
+    "Ferrol"
   ],
   "Cordoba": ["Cordoba", "Córdoba CF"],
 
@@ -273,6 +281,7 @@
   "Stuttgart": ["Stuttgart", "VfB Stuttgart", "VFB Stuttgart"],
   "Union Berlin": ["Union Berlin", "1. FC Union Berlin", "FC Union Berlin"],
   "Wolfsburg": ["Wolfsburg", "VfL Wolfsburg"],
+  "Osnabruck": ["Osnabruck", "VfL Osnabruck"],
   "Dortmund": ["Dortmund", "Borussia Dortmund"],
   "Mainz": ["Mainz", "1. FSV Mainz 05", "FSV Mainz 05", "FSV Mainz"],
   "FC Koln": ["FC Koln", "1. FC Köln", "FC Köln", "1. FC Koln"],
@@ -380,5 +389,11 @@
   "Bastia": ["Bastia", "SC Bastia", "SCB"],
   "Pau": ["Pau", "Pau FC"],
   "Laval": ["Laval", "Stade Lavallois", "Stade Lavallois Mayenne FC"],
-  "Concarneau": ["Concarneau", "US Concarneau", "USC"]
+  "Concarneau": ["Concarneau", "US Concarneau", "USC"],
+  "Oxford": ["Oxford Utd", "Oxford"],
+  "Wehen": ["Wehen", "Wehen Wiesbaden"],
+  "Dynamo": ["Dynamo", "Dynamo Dresden"],
+  "Ingolstadt": ["Ingolstadt", "Ingolstadt"],
+  "Logrones": ["Logrones", "UD Logrones"],
+  "Andorra": ["Andorra", "FC Andorra"]
 }
