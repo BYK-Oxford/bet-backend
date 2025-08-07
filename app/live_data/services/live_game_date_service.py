@@ -9,7 +9,8 @@ from app.teams.models.team_model import Team
 from app.scraper.scraper_manager import ScraperManager
 from app.new_odds.services.betfair_service import BetfairService
 import json
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from math import ceil
 
 class LiveGameDataService:
     def __init__(self, db: Session):
@@ -79,6 +80,7 @@ class LiveGameDataService:
         self.db.refresh(live_data)
         return live_data
 
+ 
     def get_live_game_data(self, odds_calculation_id: str) -> LiveGameData | None:
         return self.db.query(LiveGameData).filter_by(odds_calculation_id=odds_calculation_id).first()
 
@@ -119,9 +121,12 @@ class LiveGameDataService:
         )
 
 
+
+
     def check_and_update_live_games(self):
         """
-        Check all today's games and trigger live data scraping for games that are live.
+        Check all today's games and trigger live data scraping for games that are live,
+        using ThreadPoolExecutor to run up to 5 scrapes in parallel.
         """
         today = date.today()
 
@@ -135,8 +140,8 @@ class LiveGameDataService:
         live_games = self.betfafairService.get_live_games_by_league()
         live_games_dict = {str(game.get("event_id")): game for game in live_games if game.get("event_id")}
 
-        # Step 3: Iterate and check for matches
-        for odds_calc in todays_odds_calculations:
+        def scrape_task(odds_calc):
+            # Inner function to run scraping for one odds calculation entry
             new_odds = self.db.query(NewOdds).filter(
                 and_(
                     NewOdds.home_team_id == odds_calc.home_team_id,
@@ -146,19 +151,38 @@ class LiveGameDataService:
             ).first()
 
             if not new_odds:
-                continue
+                return f"No new odds for odds_calculation_id {odds_calc.odds_calculation_id}"
 
             try:
                 market_data = json.loads(new_odds.full_market_data)
                 event_id = str(market_data.get("event_id"))
             except Exception:
-                continue
+                return f"Failed to load market data for odds_calculation_id {odds_calc.odds_calculation_id}"
 
             live_game = live_games_dict.get(event_id)
             if live_game:
                 standard_url = live_game.get("standard_url")
                 try:
                     self.trigger_live_data_scrape(odds_calculation_id=odds_calc.odds_calculation_id, scrape_url=standard_url)
-                    print(f"Live data scraped and saved for event_id: {event_id}")
+                    return f"Live data scraped and saved for event_id: {event_id}"
                 except Exception as e:
-                    print(f"Error scraping live data for event_id {event_id}: {str(e)}")
+                    return f"Error scraping live data for event_id {event_id}: {str(e)}"
+            else:
+                return f"No live game match for event_id: {event_id}"
+
+         # ---- Submit in one go, log batches as they’re submitted
+        batch_size = 5
+        total_batches = ceil(len(todays_odds_calculations) / batch_size)
+
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = []
+            for i in range(total_batches):
+                batch = todays_odds_calculations[i * batch_size: (i + 1) * batch_size]
+                batch_ids = [str(o.odds_calculation_id) for o in batch]
+                print(f"\n🚀 Submitting Batch {i + 1} | OddsCalculation IDs: {batch_ids}")
+
+                for odds_calc in batch:
+                    futures.append(executor.submit(scrape_task, odds_calc))
+
+            for future in as_completed(futures):
+                print(future.result())

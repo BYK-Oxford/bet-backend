@@ -1,11 +1,14 @@
 import requests
+import os
 
 class BetfairAuthService:
     def __init__(self, username, password, app_key):
         self.username = username
         self.password = password
         self.app_key = app_key
-        self.certs_path = '../BetfairCerts'
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # this gets you to app/
+        self.certs_path = os.path.join(base_dir, 'BetfairCerts')  # app/BetfairCerts
+
         self.login_url = "https://identitysso-cert.betfair.com/api/certlogin"
     
     def get_session_token(self):
