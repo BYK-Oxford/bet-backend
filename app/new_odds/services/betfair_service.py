@@ -10,18 +10,39 @@ from datetime import datetime
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.teams.services.team_service import TeamService
 from app.leagues.services.league_service import LeagueService
+from app.core.betfair_auth import BetfairAuthService
 
 class BetfairService:
     def __init__(self, db: Session):
         self.db = db
         self.appKey = "OTCBYdanqSKplEmM"
-        self.sessionToken = "O43pZ76JoNaTP2Krb9RWLQub/x5x53FH+n6kXoX6Ifc="
+        #self.sessionToken = "O43pZ76JoNaTP2Krb9RWLQub/x5x53FH+n6kXoX6Ifc="
         self.url = "https://api.betfair.com/exchange/betting/json-rpc/v1"
+
+        # Hardcoded credentials and cert path here:
+        self.username = "Sharburrys07@yahoo.com"
+        self.password = "BYK0xf0rd!"
+        
+        self.sessionToken = None
+        
+        # Authenticate right away
+        self.authenticate()
         
         # Initialize services
         self.new_odds_service = NewOddsService(db)
         self.team_service = TeamService(db)
         self.league_service = LeagueService(db)
+
+
+    def authenticate(self):
+        auth_service = BetfairAuthService(self.username, self.password,  self.appKey)
+        token = auth_service.get_session_token()
+        if token:
+            self.sessionToken = token
+            print("Successfully authenticated.")
+        else:
+            raise Exception("Authentication failed.")
+
 
     def call_aping(self, jsonrpc_req: Dict) -> Optional[Dict]:
         headers = {
