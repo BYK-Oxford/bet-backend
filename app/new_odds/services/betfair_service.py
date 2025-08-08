@@ -38,7 +38,10 @@ class BetfairService:
         auth_service = BetfairAuthService(self.username, self.password,  self.appKey)
         token = auth_service.get_session_token()
         if token:
-            self.sessionToken = token
+            self.sessionToken = "WX3drxx4Ki6zcKH1EZcoJSIxxcGqEiEX2EimOLVzILM="
+
+            print("Token:" ,self.sessionToken )
+            print("Token generated:" ,token )
             print("Successfully authenticated.")
         else:
             raise Exception("Authentication failed.")
@@ -401,6 +404,7 @@ class BetfairService:
         }
 
         res = self.call_aping(req)
+        print("Total games available: ",len(res["result"]))
         if not res or "result" not in res or len(res["result"]) == 0:
             print("⚠️ No in-play markets found.")
             return []
