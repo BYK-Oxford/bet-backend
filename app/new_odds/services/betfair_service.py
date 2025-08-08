@@ -115,13 +115,7 @@ class BetfairService:
         return self.call_aping(req)
 
     def get_filtered_competitions(self) -> Dict[str, Dict]:
-        # target_names = [
-        #         "English Premier League", "English Championship",
-        #         "Scottish Premiership", "Scottish Championship",
-        #         "Spanish La Liga", "Spanish Segunda",
-        #         "Italian Serie A", "Italian Serie B",
-        #         "German Bundesliga", "German Bundesliga 2", "Turkish Super League", "French Ligue 1"
-        # ]
+       
         target_names = [
                 "English Premier League","English Championship","Scottish Premiership","Scottish Championship",
                 "Turkish Super League","Spanish La Liga","German Bundesliga 2",

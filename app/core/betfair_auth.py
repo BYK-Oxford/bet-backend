@@ -18,7 +18,7 @@ class BetfairAuthService:
             'password': self.password
         }
         headers = {
-            'X-Application': 'YourAppKeyGoesHere',
+            'X-Application': self.app_key,
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
