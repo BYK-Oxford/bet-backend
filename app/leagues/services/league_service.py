@@ -14,7 +14,7 @@ class LeagueService:
         'I1': 'Italian Serie A',
         'I2': 'Italian Serie B',
         'SP1': 'Spanish La Liga',
-        'SP2': 'Spanish Segunda',
+        'SP2': 'Spanish Segunda Division',
         'D1': 'German Bundesliga',
         'D2': 'German Bundesliga 2',
         # Add more mappings as needed

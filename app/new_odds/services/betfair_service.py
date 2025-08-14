@@ -119,8 +119,9 @@ class BetfairService:
     def get_filtered_competitions(self) -> Dict[str, Dict]:
        
         target_names = [
-                "English Premier League","English Championship","Scottish Premiership","Scottish Championship",
-                "Turkish Super League","Spanish La Liga","German Bundesliga 2",
+                "English Premier League","English Championship","Scottish Premiership",
+                "Scottish Championship","Turkish Super League","Spanish La Liga","Spanish Segunda Division",
+                "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A"
                 ]
         
         event_type_id = "1"  # Soccer
@@ -339,8 +340,8 @@ class BetfairService:
             "English Championship": "E1",  # English Championship
             "Scottish Premiership": "SC0", # Scottish Premiership
             "Scottish Championship": "SC1", # Scottish Championship
-            "Spanish La Liga": "SP1",  # Spanish Segunda
-            "Spanish Segunda": "SP2",  # Spanish Segunda
+            "Spanish La Liga": "SP1",  # Spanish La Liga
+            "Spanish Segunda Division": "SP2",  # Spanish Segunda Division
             "German Bundesliga": "D1",  
             "German Bundesliga 2": "D2",  
             "Italian Serie A": "I1",  
