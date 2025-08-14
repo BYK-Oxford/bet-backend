@@ -28,6 +28,8 @@ class LiveGameData(Base):
     # Match Stats
     shots_on_target_home = Column(Integer, nullable=True)
     shots_on_target_away = Column(Integer, nullable=True)
+    shots_off_target_home = Column(Integer, nullable=True)
+    shots_off_target_away = Column(Integer, nullable=True)
     corners_home = Column(Integer, nullable=True)
     corners_away = Column(Integer, nullable=True)
 

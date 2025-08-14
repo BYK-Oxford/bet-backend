@@ -54,7 +54,7 @@ def start_scheduler():
         db = SessionLocal()
         service = LiveGameDataService(db=db)
         try:
-            service.check_and_update_live_games()
+            asyncio.run(service.check_and_update_live_games())
         except Exception as e:
             logger.error(f"❌ Error in live update scheduler: {e}")
         finally:

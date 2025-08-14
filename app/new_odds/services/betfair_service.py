@@ -38,10 +38,9 @@ class BetfairService:
         auth_service = BetfairAuthService(self.username, self.password,  self.appKey)
         token = auth_service.get_session_token()
         if token:
-            self.sessionToken = "WX3drxx4Ki6zcKH1EZcoJSIxxcGqEiEX2EimOLVzILM="
-
-            print("Token:" ,self.sessionToken )
-            print("Token generated:" ,token )
+            self.sessionToken = token
+            print("Token:" ,self.sessionToken)
+            print("Token generated:" ,token)
             print("Successfully authenticated.")
         else:
             raise Exception("Authentication failed.")
@@ -168,13 +167,6 @@ class BetfairService:
                 event_id = event['id']
                 event_name = event['name']
                 event_time = event['openDate']
-                # event_time = datetime.strptime(event['openDate'], "%Y-%m-%dT%H:%M:%S.%fZ")
-                # event_time = event_time.replace(tzinfo=pytz.utc)
-                # london_time = event_time.astimezone(pytz.timezone("Europe/London"))
-
-                # Drop the timezone and format as string
-                # formatted_time = london_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-
                 event_dict = {
                     "event_id": event_id,
                     "event_name": event_name,

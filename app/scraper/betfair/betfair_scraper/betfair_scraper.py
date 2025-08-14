@@ -1,4 +1,6 @@
 from selenium import webdriver
+import tempfile
+import shutil
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
@@ -9,55 +11,154 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
+import asyncio
+from playwright.async_api import async_playwright
 import time
 
+import asyncio
 
-def dismiss_cookies(driver):
-    wait = WebDriverWait(driver, 10)
+import asyncio
+
+async def dismiss_cookies(page):
     try:
-        reject_button = wait.until(EC.element_to_be_clickable((By.ID, 'onetrust-reject-all-handler')))
-        reject_button.click()
-        print("✅ Clicked 'Allow necessary only' button (reject all cookies)")
-        time.sleep(2)
-    except TimeoutException:
-        print("ℹ️ No cookie reject button found or banner already dismissed")
+        # Wait for cookie banner container and print its HTML content for debugging
+        banner = await page.wait_for_selector('#onetrust-button-group-parent', timeout=15000)
+        banner_html = await banner.inner_html()
+        print("ℹ️ Cookie banner HTML content:", banner_html[:500])  # print first 500 chars
 
-def wait_for_page_stabilize(driver, wait_time=2, check_interval=0.2):
-    last_scroll_y = driver.execute_script("return window.scrollY;")
+    except Exception as e:
+        print(f"⚠️ Cookie banner container not found: {e}")
+        # maybe no banner, or not loaded yet
+        # you can still try other methods or return here
+
+    # Check if cookie banner inside an iframe
+    iframe_element = await page.query_selector('iframe')
+    if iframe_element:
+        print("ℹ️ Cookie banner might be inside an iframe, switching context...")
+        frame = await iframe_element.content_frame()
+        if frame is None:
+            print("⚠️ Could not access iframe content.")
+            return
+        context_page = frame
+    else:
+        context_page = page
+
+    # Try JS click first (simple & robust if button exists and is clickable)
+    try:
+        js_result = await context_page.evaluate("""
+            () => {
+                const btn = document.querySelector('#onetrust-reject-all-handler');
+                if (btn && btn.offsetParent !== null) { // visible check
+                    btn.click();
+                    return true;
+                }
+                return false;
+            }
+        """)
+        if js_result:
+            print("✅ Clicked 'Allow necessary only' button via JS evaluation")
+            await asyncio.sleep(2)
+            return
+        else:
+            print("ℹ️ JS click method: button not found or not visible")
+    except Exception as e:
+        print(f"⚠️ JS click method failed: {e}")
+
+    selectors = [
+        ('CSS selector', '#onetrust-reject-all-handler'),
+        ('XPath selector', '//button[@id="onetrust-reject-all-handler"]'),
+        ('Text selector', 'button:has-text("Allow necessary only")'),
+        ('Generic button filtered by text', None),  # handled separately
+        ('Wait for function', None)  # handled separately
+    ]
+
+    for method, selector in selectors:
+        try:
+            if method == 'Generic button filtered by text':
+                reject_button = context_page.locator('button').filter(has_text='Allow necessary only')
+                await reject_button.first.wait_for(timeout=5000)
+                await reject_button.first.scroll_into_view_if_needed()
+                await reject_button.first.click()
+                print(f"✅ Clicked 'Allow necessary only' button using {method}")
+                await asyncio.sleep(2)
+                return
+
+            elif method == 'Wait for function':
+                await context_page.wait_for_function(
+                    'document.querySelector("#onetrust-reject-all-handler") !== null && document.querySelector("#onetrust-reject-all-handler").offsetParent !== null',
+                    timeout=5000
+                )
+                reject_button = await context_page.query_selector('#onetrust-reject-all-handler')
+                if reject_button:
+                    await reject_button.scroll_into_view_if_needed()
+                    await reject_button.click()
+                    print(f"✅ Clicked 'Allow necessary only' button using {method}")
+                    await asyncio.sleep(2)
+                    return
+                else:
+                    print(f"ℹ️ {method}: button not found after wait")
+
+            elif method == 'XPath selector':
+                reject_button = await context_page.wait_for_selector(f'xpath={selector}', timeout=5000)
+                if reject_button:
+                    await reject_button.scroll_into_view_if_needed()
+                    await reject_button.click()
+                    print(f"✅ Clicked 'Allow necessary only' button using {method}")
+                    await asyncio.sleep(2)
+                    return
+                else:
+                    print(f"ℹ️ {method}: button not found")
+
+            else:  # CSS selector or Text selector
+                reject_button = await context_page.wait_for_selector(selector, timeout=5000)
+                if reject_button:
+                    await reject_button.scroll_into_view_if_needed()
+                    await reject_button.click()
+                    print(f"✅ Clicked 'Allow necessary only' button using {method}")
+                    await asyncio.sleep(2)
+                    return
+                else:
+                    print(f"ℹ️ {method}: button not found")
+
+        except Exception as e:
+            print(f"⚠️ Failed using {method}: {e}")
+
+    print("❌ Could not find or click the 'Allow necessary only' button by any method.")
+
+async def wait_for_page_stabilize(page, wait_time=2, check_interval=0.2):
     stable_for = 0
+    last_scroll_y = await page.evaluate("window.scrollY")
     while stable_for < wait_time:
-        time.sleep(check_interval)
-        current_scroll_y = driver.execute_script("return window.scrollY;")
+        await asyncio.sleep(check_interval)
+        current_scroll_y = await page.evaluate("window.scrollY")
         if current_scroll_y == last_scroll_y:
             stable_for += check_interval
         else:
             stable_for = 0
             last_scroll_y = current_scroll_y
 
-def click_stats_tab(driver):
-    wait = WebDriverWait(driver, 10)
+async def click_stats_tab(page):
     try:
-        stats_tab = wait.until(EC.element_to_be_clickable((
-            By.XPATH,
-            '//div[contains(@class, "e367e91883575454-iconButton")]/span[text()="Stats"]'
-        )))
-        stats_tab.click()
+        # Wait for the stats tab button inside modal
+        stats_tab = await page.wait_for_selector(
+            'xpath=//div[contains(@class, "e367e91883575454-iconButton")]/span[text()="Stats"]', timeout=10000
+        )
+        await stats_tab.click()
         print("✅ Clicked the 'Stats' tab inside modal")
-        time.sleep(1)  # let content load
+        await asyncio.sleep(1)  # let content load
     except Exception as e:
         print("⚠️ Could not click Stats tab:", e)
 
-def scroll_modal_to_bottom(driver):
-    wait = WebDriverWait(driver, 10)
+async def scroll_modal_to_bottom(page):
     try:
-        # Find the modal scroll container (adjust selector if needed)
-        scroll_container = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#modal-root div[role="dialog"]')))
-        
-        last_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
+        # Wait for modal scroll container
+        scroll_container = await page.wait_for_selector('#modal-root div[role="dialog"]', timeout=10000)
+
+        last_height = await page.evaluate('(el) => el.scrollHeight', scroll_container)
         while True:
-            driver.execute_script("arguments[0].scrollTo(0, arguments[0].scrollHeight);", scroll_container)
-            time.sleep(1)  # wait for loading
-            new_height = driver.execute_script("return arguments[0].scrollHeight", scroll_container)
+            await page.evaluate('(el) => el.scrollTo(0, el.scrollHeight)', scroll_container)
+            await asyncio.sleep(1)  # wait for loading
+            new_height = await page.evaluate('(el) => el.scrollHeight', scroll_container)
             if new_height == last_height:
                 break
             last_height = new_height
@@ -65,56 +166,77 @@ def scroll_modal_to_bottom(driver):
     except Exception as e:
         print("⚠️ Could not scroll modal:", e)
 
-def get_betfair_page_content_selenium(url):
-    options = Options()
-    options.headless = False  # To actually see resizing in action, headless False is better for debugging
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-    wait = WebDriverWait(driver, 20)
+async def get_betfair_page_content(url):
+    # Create a temporary directory for persistent user data to avoid conflicts
+    temp_profile_dir = tempfile.mkdtemp()
 
     try:
-        time.sleep(5)  # Wait for initial scripts
+        async with async_playwright() as p:
+            # Launch browser with persistent context using temp profile dir (like user-data-dir in Selenium)
+            browser_context = await p.chromium.launch_persistent_context(
+                user_data_dir=temp_profile_dir,
+                headless=True,
+                args=["--no-sandbox"]
+            )
+            page = await browser_context.new_page()
 
-        # Dismiss cookie banner
-        dismiss_cookies(driver)
+            await page.goto(url)
+            await asyncio.sleep(5)  # Wait for initial scripts
 
-        # Scroll to top and let layout settle
-        driver.execute_script("window.scrollTo(0, 0);")
-        time.sleep(2)
+            content = await page.content()
+            print(content)
 
-        wait_for_page_stabilize(driver, wait_time=3)
+            # Dismiss cookie banner 
+            await dismiss_cookies(page)
+            print("✅ Hid cookie overlay and banner")
 
-        # Click Statistics button
-        stats_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[contains(.,"Statistics")]')))
-        driver.execute_script("arguments[0].scrollIntoView({behavior: 'auto', block: 'center'});", stats_button)
-        time.sleep(2)
 
-        try:
-            stats_button.click()
-        except Exception:
-            driver.execute_script("arguments[0].click();", stats_button)
-        print("✅ Clicked Statistics button")
+            # Scroll to top and let layout settle
+            await page.evaluate("window.scrollTo(0, 0);")
+            await asyncio.sleep(2)
 
-        wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#modal-root div')))
-        time.sleep(1)
+            await wait_for_page_stabilize(page, wait_time=3)
 
-        # Click Stats tab
-        click_stats_tab(driver)
-        time.sleep(1)
+            # Click Statistics button
+            stats_span = await page.wait_for_selector('xpath=//span[contains(text(), "Statistics")]', timeout=20000)
+            stats_button = await stats_span.evaluate_handle('el => el.closest("button")')
+            await stats_button.scroll_into_view_if_needed()
+            await asyncio.sleep(2)
 
-        # *** NEW: Zoom out page to 80% so all stats fit in modal and no scrolling needed ***
-        driver.execute_script("document.body.style.zoom='80%';")
-        time.sleep(1)  # allow layout to adjust
+            try:
+                await stats_button.click()
+            except Exception:
+                await page.evaluate('(el) => el.click()', stats_button)
+            print("✅ Clicked Statistics button")
 
-        # Now extract page content (modal fully visible, no scroll)
-        page_content = driver.page_source
+
+            # await page.wait_for_selector('#modal-root div', timeout=20000)
+            await asyncio.sleep(1)
+
+            # Click Stats tab - assuming async click_stats_tab function exists
+            await click_stats_tab(page)
+            await asyncio.sleep(1)
+
+            # Zoom out page to 80% so all stats fit in modal and no scrolling needed
+            await page.evaluate("document.body.style.zoom='80%'")
+            await asyncio.sleep(1)
+
+            # Extract page content (modal fully visible, no scroll)
+            page_content = await page.content()
+
+            await browser_context.close()
 
     except Exception as e:
         print("⚠️ Modal could not be opened or processed:", e)
-        page_content = driver.page_source
+        page_content = None  # or fallback if you want
 
-    driver.quit()
+    finally:
+        # Clean up temp profile directory
+        shutil.rmtree(temp_profile_dir, ignore_errors=True)
+
     return page_content
+
+
 
 def parse_betfair_match_data(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')

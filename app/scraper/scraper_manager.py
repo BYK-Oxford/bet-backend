@@ -1,6 +1,6 @@
 from app.scraper.oddsportal.oddsportal_scraper.oddsportal_scraper import get_odds_page_content, parse_match_data
 from app.scraper.fishy.fishy_scraper.fishy_scraper import get_fishy_page_content, parse_fishy_league_standing_data
-from app.scraper.betfair.betfair_scraper.betfair_scraper import get_betfair_page_content_selenium, parse_betfair_match_data  # You'll need to put your Betfair functions in this module
+from app.scraper.betfair.betfair_scraper.betfair_scraper import get_betfair_page_content, parse_betfair_match_data  # You'll need to put your Betfair functions in this module
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.current_league.services.current_league_service import CurrentLeagueService
 from app.teams.services.team_service import TeamService
@@ -125,7 +125,7 @@ class ScraperManager:
     async def _run_betfair_scraper(self, url):
         try:
             # Fetch page content with Selenium
-            page_content = get_betfair_page_content_selenium(url)
+            page_content = await get_betfair_page_content(url)
 
             # Parse data from page content
             match_data = parse_betfair_match_data(page_content)

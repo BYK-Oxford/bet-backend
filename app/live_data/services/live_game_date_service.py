@@ -3,19 +3,18 @@ from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app.live_data.models.live_game_data import LiveGameData  # your model import path
+from app.live_data.services.sofa_service import SofaScoreService  # your model import path
 from app.odds_calculation.models.odds_calculation_model import OddsCalculation  # if needed for validation
 from app.new_odds.models.new_odds_model import NewOdds  # if needed for validation
 from app.teams.models.team_model import Team
-from app.scraper.scraper_manager import ScraperManager
 from app.new_odds.services.betfair_service import BetfairService
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from math import ceil
 
 class LiveGameDataService:
     def __init__(self, db: Session):
         self.db = db
         self.betfafairService = BetfairService(db)
+        self.sofa_service = SofaScoreService()
 
     def create_live_game_data(
         self,
@@ -30,6 +29,8 @@ class LiveGameDataService:
         live_away_odds: float | None = None,
         shots_on_target_home: int | None = None,
         shots_on_target_away: int | None = None,
+        shots_off_target_home: int | None = None,
+        shots_off_target_away: int | None = None,
         corners_home: int | None = None,
         corners_away: int | None = None,
     ) -> LiveGameData:
@@ -52,6 +53,8 @@ class LiveGameDataService:
             live_data.live_away_odds = live_away_odds
             live_data.shots_on_target_home = shots_on_target_home
             live_data.shots_on_target_away = shots_on_target_away
+            live_data.shots_off_target_home = shots_off_target_home
+            live_data.shots_off_target_away = shots_off_target_away
             live_data.corners_home = corners_home
             live_data.corners_away = corners_away
             live_data.last_updated = datetime.now(timezone.utc)
@@ -70,6 +73,8 @@ class LiveGameDataService:
                 live_away_odds=live_away_odds,
                 shots_on_target_home=shots_on_target_home,
                 shots_on_target_away=shots_on_target_away,
+                shots_off_target_home=shots_off_target_home,
+                shots_off_target_away=shots_off_target_away,
                 corners_home=corners_home,
                 corners_away=corners_away,
                 last_updated=datetime.now(timezone.utc)
@@ -84,64 +89,23 @@ class LiveGameDataService:
     def get_live_game_data(self, odds_calculation_id: str) -> LiveGameData | None:
         return self.db.query(LiveGameData).filter_by(odds_calculation_id=odds_calculation_id).first()
 
-    def trigger_live_data_scrape(self, odds_calculation_id: str, scrape_url: str):
-        """
-        Trigger the scraper using the provided scrape_url and update or create live game data
-        using the given odds_calculation_id.
-        """
-        if not odds_calculation_id or not scrape_url:
-            raise ValueError("Both odds_calculation_id and scrape_url must be provided.")
-
-        # Run the scraper
-        scraper = ScraperManager()
-        scraped_data = scraper._run_betfair_scraper(url=scrape_url)
-
-        if not scraped_data:
-            raise ValueError("Scraping failed or returned no data")
-
-        # Check if match time is FT (Full Time)
-        match_time = scraped_data.get("Time")
-        is_live_status = False if match_time and match_time.strip().upper() == "FT" else True
-
-        # Perform create or update (your create_live_game_data should handle upsert logic)
-        self.create_live_game_data(
-            odds_calculation_id=odds_calculation_id,
-            is_live=is_live_status,
-            scrape_url=scrape_url,
-            live_home_score=int(scraped_data.get("Home Score", 0)),
-            live_away_score=int(scraped_data.get("Away Score", 0)),
-            match_time=scraped_data.get("Time"),
-            live_home_odds=None,
-            live_draw_odds=None,
-            live_away_odds=None,
-            shots_on_target_home=int(scraped_data.get("Stats", {}).get("Shots On Target", {}).get("Home", 0)),
-            shots_on_target_away=int(scraped_data.get("Stats", {}).get("Shots On Target", {}).get("Away", 0)),
-            corners_home=int(scraped_data.get("Stats", {}).get("Corner", {}).get("Home", 0)),
-            corners_away=int(scraped_data.get("Stats", {}).get("Corner", {}).get("Away", 0)),
-        )
-
-
-
-
-    def check_and_update_live_games(self):
-        """
-        Check all today's games and trigger live data scraping for games that are live,
-        using ThreadPoolExecutor to run up to 5 scrapes in parallel.
-        """
+    async def check_and_update_live_games(self):
         today = date.today()
-
-        # Step 1: Fetch all OddsCalculation entries for today
-        todays_odds_calculations = self.db.query(OddsCalculation).filter(OddsCalculation.date == today).all()
+        todays_odds_calculations = self.db.query(OddsCalculation).filter(
+            OddsCalculation.date == today
+        ).all()
         if not todays_odds_calculations:
             print("No odds calculations found for today.")
             return
 
-        # Step 2: Get all live games from Betfair
-        live_games = self.betfafairService.get_live_games_by_league()
-        live_games_dict = {str(game.get("event_id")): game for game in live_games if game.get("event_id")}
+        # 1️⃣ Get Betfair live games
+        betfair_live_games = self.betfafairService.get_live_games_by_league()
+        betfair_live_dict = {str(g.get("event_id")): g for g in betfair_live_games if g.get("event_id")}
 
-        def scrape_task(odds_calc):
-            # Inner function to run scraping for one odds calculation entry
+        # 2️⃣ Get SofaScore live matches
+        sofascore_live_matches = self.sofa_service.get_live_matches()
+
+        for odds_calc in todays_odds_calculations:
             new_odds = self.db.query(NewOdds).filter(
                 and_(
                     NewOdds.home_team_id == odds_calc.home_team_id,
@@ -151,38 +115,57 @@ class LiveGameDataService:
             ).first()
 
             if not new_odds:
-                return f"No new odds for odds_calculation_id {odds_calc.odds_calculation_id}"
+                print(f"No new odds for odds_calculation_id {odds_calc.odds_calculation_id}")
+                continue
 
             try:
                 market_data = json.loads(new_odds.full_market_data)
                 event_id = str(market_data.get("event_id"))
             except Exception:
-                return f"Failed to load market data for odds_calculation_id {odds_calc.odds_calculation_id}"
+                print(f"Failed to load market data for odds_calculation_id {odds_calc.odds_calculation_id}")
+                continue
 
-            live_game = live_games_dict.get(event_id)
-            if live_game:
-                standard_url = live_game.get("standard_url")
-                try:
-                    self.trigger_live_data_scrape(odds_calculation_id=odds_calc.odds_calculation_id, scrape_url=standard_url)
-                    return f"Live data scraped and saved for event_id: {event_id}"
-                except Exception as e:
-                    return f"Error scraping live data for event_id {event_id}: {str(e)}"
-            else:
-                return f"No live game match for event_id: {event_id}"
+            # Check if game is live in Betfair
+            betfair_game = betfair_live_dict.get(event_id)
+            if not betfair_game:
+                print(f"No live Betfair match for event_id: {event_id}")
+                continue
 
-         # ---- Submit in one go, log batches as they’re submitted
-        batch_size = 5
-        total_batches = ceil(len(todays_odds_calculations) / batch_size)
+            # Get Betfair team names
+            betfair_home = betfair_game.get("home_team", "").strip().lower()
+            betfair_away = betfair_game.get("away_team", "").strip().lower()
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = []
-            for i in range(total_batches):
-                batch = todays_odds_calculations[i * batch_size: (i + 1) * batch_size]
-                batch_ids = [str(o.odds_calculation_id) for o in batch]
-                print(f"\n🚀 Submitting Batch {i + 1} | OddsCalculation IDs: {batch_ids}")
+            # Match with SofaScore
+            matched_sofa_game = next(
+                (
+                    m for m in sofascore_live_matches
+                    if m.get("homeTeam", {}).get("name", "").strip().lower() == betfair_home
+                    and m.get("awayTeam", {}).get("name", "").strip().lower() == betfair_away
+                ),
+                None
+            )
 
-                for odds_calc in batch:
-                    futures.append(executor.submit(scrape_task, odds_calc))
+            if not matched_sofa_game:
+                print(f"No SofaScore match for Betfair game {betfair_home} vs {betfair_away}")
+                continue
 
-            for future in as_completed(futures):
-                print(future.result())
+            # Update DB with SofaScore live stats
+            self.create_live_game_data(
+                odds_calculation_id=odds_calc.odds_calculation_id,
+                is_live=True,
+                scrape_url=None,
+                live_home_score=matched_sofa_game.get("homeScore", {}).get("current"),
+                live_away_score=matched_sofa_game.get("awayScore", {}).get("current"),
+                match_time=matched_sofa_game.get("currentMinute"),
+                live_home_odds=betfair_game.get("home_odds"),
+                live_draw_odds=betfair_game.get("draw_odds"),
+                live_away_odds=betfair_game.get("away_odds"),
+                shots_on_target_home=matched_sofa_game.get("homeShotsOnTarget"),
+                shots_on_target_away=matched_sofa_game.get("awayShotsOnTarget"),
+                shots_off_target_home=matched_sofa_game.get("homeShotsOffTarget"),
+                shots_off_target_away=matched_sofa_game.get("awayShotsOffTarget"),
+                corners_home=matched_sofa_game.get("cornerKicksHome"),
+                corners_away=matched_sofa_game.get("cornerKicksAway"),
+            )
+
+            print(f"✅ Updated live data for {betfair_home} vs {betfair_away}")
