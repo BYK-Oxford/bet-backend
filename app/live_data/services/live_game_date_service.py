@@ -16,7 +16,7 @@ class LiveGameDataService:
         self.betfafairService = BetfairService(db)
         self.sofa_service = SofaScoreService()
         # Load team aliases from JSON file once
-        with open("app/teams/team_aliases.json", "r") as f:
+        with open("app/teams/teams_aliases.json", "r") as f:
             self.team_aliases = json.load(f)
         # Create a mapping from lowercased alias to canonical name
         self.alias_to_team = {}
