@@ -7,9 +7,25 @@ from app.standings.models.standings_model import Standing
 from app.current_league.models.current_league_model import CurrentLeague
 from app.teams.models.team_model import Team
 from app.odds_calculation.services.odds_saving_service import OddsSavingService
+from app.leagues.models.leagues_models import League
 
 
 class OddsCalculationService:
+    LAST_SEASON_ID = None
+    CURRENT_SEASON_ID=None
+    CURRENT_LEAGUE_ID = None
+
+    
+    LEAGUE_TIERS = {
+        "C1": ["L1", "L2"],   # England
+        "C2": ["L3", "L4"],   # Germany
+        "C3": ["L5", "L6"],   # Italy
+        "C4": ["L7", "L8"],   # Scotland
+        "C5": ["L9", "L10"],  # Spain
+        "C6": ["L11"],        # Turkey
+        "C7": ["L12"]         # France
+    }
+
     def __init__(self, db: Session):
         self.db = db
         self.odds_saving_service = OddsSavingService(db)
@@ -20,7 +36,7 @@ class OddsCalculationService:
 
         for match in new_matches:
             print(f"[LOG] Processing match_id: {match.new_odds_id}, Home: {match.home_team_id}, Away: {match.away_team_id}, Date: {match.date}")
-
+            self.__class__.CURRENT_LEAGUE_ID = match.league_id
             odds_data = await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
             if not odds_data:
                     print(f"[WARN] No odds returned for match_id: {match.new_odds_id}")
@@ -52,6 +68,9 @@ class OddsCalculationService:
         if not last_season:
             print(f"[WARN] No previous season found for year: {self.get_previous_season_year(season.season_year)}")
         last_season_id = last_season.season_id if last_season else None
+
+        self.__class__.LAST_SEASON_ID = last_season_id
+        self.__class__.CURRENT_SEASON_ID = season_id
 
         # Gather data for head-to-head, current season, and last season
         head_to_head = await self.get_head_to_head_record(home_team_id, away_team_id)
@@ -99,12 +118,56 @@ class OddsCalculationService:
             print(f"[ERROR] No team found for team_id: {team_id}")
             return {}
 
+
+        # Use class-level variables for current and last season
+        current_league_id = self.__class__.CURRENT_LEAGUE_ID
+
         current_performance = await self.get_team_season_performance(team_id, season_id)
         if not current_performance or current_performance['total_played'] == 0:
             print(f"[WARN] No current season performance for team_id: {team_id}")
         last_performance = await self.get_team_season_performance(team_id, last_season_id) if last_season_id else None
         if not last_performance or last_performance['total_played'] == 0:
             print(f"[WARN] No last season performance for team_id: {team_id}")
+
+        
+        # Determine last season league
+        last_league_record = self.db.query(Match).filter(
+            Match.season_id == last_season_id,
+            ((Match.home_team_id == team_id) | (Match.away_team_id == team_id))
+        ).first()
+        last_league_id = last_league_record.league_id if last_league_record else None
+        # Update last_performance with weighted value
+        if last_performance and last_league_id:
+            current_league = self.db.query(League).filter(League.league_id == current_league_id).first()
+            country_id = current_league.country_id if current_league else None
+            tiers = self.__class__.LEAGUE_TIERS.get(country_id, [])
+
+            last_tier_index = tiers.index(last_league_id) if last_league_id in tiers else None
+            current_tier_index = tiers.index(current_league_id) if current_league_id in tiers else None
+
+            if is_home:
+                # Home win adjustment
+                if last_league_id == current_league_id:
+                    last_performance['wins_ratio'] = (last_performance.get('wins_ratio', 0) or 0) * 1
+                elif last_tier_index is not None and current_tier_index is not None:
+                    if last_tier_index < current_tier_index:
+                        last_performance['wins_ratio'] = (last_performance.get('wins_ratio', 0) or 0) * 2
+                    else:
+                        last_performance['wins_ratio'] = (last_performance.get('wins_ratio', 0) or 0) * 0.5
+                else:
+                    last_performance['wins_ratio'] = (last_performance.get('wins_ratio', 0) or 0) * 0.5
+            else:
+                # Away loss adjustment
+                if last_league_id == current_league_id:
+                    last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) * 1
+                elif last_tier_index is not None and current_tier_index is not None:
+                    if last_tier_index < current_tier_index:
+                        last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 2
+                    else:
+                        last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 0.5
+                else:
+                    last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 2
+
 
         team_data = {
             "team_id": team_id,
@@ -131,6 +194,7 @@ class OddsCalculationService:
             record = self.db.query(Standing).filter(Standing.team_id == team_id, Standing.season_id == season_id).first()
 
         played, wins, draws, losses = (record.played, record.wins, record.draws, record.losses) if record else (0, 0, 0, 0)
+    
 
         return {
             "wins": wins,
@@ -263,3 +327,5 @@ class OddsCalculationService:
         if head_to_head_total_matches == 0:
             return (weighted_home_win_ratio + weighted_away_loss_ratio) / 2
         return (weighted_home_win_ratio + weighted_away_loss_ratio + (head_to_head_home_win_ratio*1.25)) / 3
+
+    
