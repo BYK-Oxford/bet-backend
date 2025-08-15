@@ -15,6 +15,21 @@ class LiveGameDataService:
         self.db = db
         self.betfafairService = BetfairService(db)
         self.sofa_service = SofaScoreService()
+        # Load team aliases from JSON file once
+        with open("app/teams/team_aliases.json", "r") as f:
+            self.team_aliases = json.load(f)
+        # Create a mapping from lowercased alias to canonical name
+        self.alias_to_team = {}
+        for canonical, aliases in self.team_aliases.items():
+            for alias in aliases:
+                self.alias_to_team[alias.strip().lower()] = canonical
+
+    def normalize_team_name(self, name: str) -> str:
+        """
+        Converts a team name to its canonical version using aliases.
+        If no alias found, returns the original name lowercased.
+        """
+        return self.alias_to_team.get(name.strip().lower(), name.strip().lower())
 
     def create_live_game_data(
         self,
@@ -132,15 +147,16 @@ class LiveGameDataService:
                 continue
 
             # Get Betfair team names
-            betfair_home = betfair_game.get("home_team", "").strip().lower()
-            betfair_away = betfair_game.get("away_team", "").strip().lower()
+            # Normalize team names using aliases
+            betfair_home = self.normalize_team_name(betfair_game.get("home_team", ""))
+            betfair_away = self.normalize_team_name(betfair_game.get("away_team", ""))
 
             # Match with SofaScore
             matched_sofa_game = next(
                 (
                     m for m in sofascore_live_matches
-                    if m.get("homeTeam", {}).get("name", "").strip().lower() == betfair_home
-                    and m.get("awayTeam", {}).get("name", "").strip().lower() == betfair_away
+                    if self.normalize_team_name(m.get("homeTeam", {}).get("name", "")) == betfair_home
+                    and self.normalize_team_name(m.get("awayTeam", {}).get("name", "")) == betfair_away
                 ),
                 None
             )

@@ -166,7 +166,7 @@ class OddsCalculationService:
                     else:
                         last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 0.5
                 else:
-                    last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 2
+                    last_performance['loss_ratio'] = (last_performance.get('loss_ratio', 0) or 0) / 0.5
 
 
         team_data = {
@@ -201,9 +201,9 @@ class OddsCalculationService:
             "draws": draws,
             "losses": losses,
             "total_played": played,
-            "wins_ratio": wins / played if played else 0.0,
-            "draws_ratio": draws / played if played else 0.0,
-            "losses_ratio": losses / played if played else 0.0
+            "wins_ratio": wins / played if played else 0.33,
+            "draws_ratio": draws / played if played else 0.33,
+            "losses_ratio": losses / played if played else 0.34
         }
 
 
