@@ -9,6 +9,8 @@ from app.new_odds.models.new_odds_model import NewOdds  # if needed for validati
 from app.teams.models.team_model import Team
 from app.new_odds.services.betfair_service import BetfairService
 import json
+import unicodedata
+
 
 class LiveGameDataService:
     def __init__(self, db: Session):
@@ -22,14 +24,26 @@ class LiveGameDataService:
         self.alias_to_team = {}
         for canonical, aliases in self.team_aliases.items():
             for alias in aliases:
-                self.alias_to_team[alias.strip().lower()] = canonical
+                clean_alias = self.strip_accents(alias).strip().lower()
+                self.alias_to_team[clean_alias] = canonical
 
-    def normalize_team_name(self, name: str) -> str:
-        """
-        Converts a team name to its canonical version using aliases.
-        If no alias found, returns the original name lowercased.
-        """
-        return self.alias_to_team.get(name.strip().lower(), name.strip().lower())
+    @staticmethod
+    def strip_accents(text: str) -> str:
+        if not text:
+            return ""
+        return "".join(
+            c for c in unicodedata.normalize("NFD", text)
+            if unicodedata.category(c) != "Mn"
+        )
+
+    def normalize_team_name(self, name: str | None) -> str:
+        if not name:
+            return ""
+        # Remove accents + lowercase
+        clean_name = self.strip_accents(name).strip().lower()
+        # Lookup in aliases
+        return self.alias_to_team.get(clean_name, clean_name)
+
 
     def create_live_game_data(
         self,
@@ -104,7 +118,8 @@ class LiveGameDataService:
     def get_live_game_data(self, odds_calculation_id: str) -> LiveGameData | None:
         return self.db.query(LiveGameData).filter_by(odds_calculation_id=odds_calculation_id).first()
 
-    async def check_and_update_live_games(self):
+
+    def check_and_update_live_games(self):
         today = date.today()
         todays_odds_calculations = self.db.query(OddsCalculation).filter(
             OddsCalculation.date == today
@@ -119,7 +134,8 @@ class LiveGameDataService:
 
         # 2️⃣ Get SofaScore live matches
         sofascore_live_matches = self.sofa_service.get_live_matches()
-
+        print("These are sofa live matches::")
+        print(sofascore_live_matches)
         for odds_calc in todays_odds_calculations:
             new_odds = self.db.query(NewOdds).filter(
                 and_(
@@ -136,6 +152,7 @@ class LiveGameDataService:
             try:
                 market_data = json.loads(new_odds.full_market_data)
                 event_id = str(market_data.get("event_id"))
+                event_name = market_data.get("event_name","")
             except Exception:
                 print(f"Failed to load market data for odds_calculation_id {odds_calc.odds_calculation_id}")
                 continue
@@ -148,15 +165,26 @@ class LiveGameDataService:
 
             # Get Betfair team names
             # Normalize team names using aliases
-            betfair_home = self.normalize_team_name(betfair_game.get("home_team", ""))
-            betfair_away = self.normalize_team_name(betfair_game.get("away_team", ""))
+            # Get Betfair team names from event_name
+            print("event: ", event_name)
+            # From Betfair
+            if " v " in event_name:
+                betfair_home, betfair_away = [self.normalize_team_name(t) for t in event_name.split(" v ")]
+            else:
+                print ("not found for :" ,event_name)
+                betfair_home = betfair_away = ""
 
-            # Match with SofaScore
+            print("Betfair:", betfair_home, "vs", betfair_away)
+            for m in sofascore_live_matches:
+                print("Sofa:", self.normalize_team_name(m.get("homeTeam.name", "")),
+                    "vs", self.normalize_team_name(m.get("awayTeam.name", "")))
+
+            # From SofaScore
             matched_sofa_game = next(
                 (
                     m for m in sofascore_live_matches
-                    if self.normalize_team_name(m.get("homeTeam", {}).get("name", "")) == betfair_home
-                    and self.normalize_team_name(m.get("awayTeam", {}).get("name", "")) == betfair_away
+                    if self.normalize_team_name(m.get("homeTeam.name", "")) == betfair_home
+                    and self.normalize_team_name(m.get("awayTeam.name", "")) == betfair_away
                 ),
                 None
             )
@@ -164,24 +192,47 @@ class LiveGameDataService:
             if not matched_sofa_game:
                 print(f"No SofaScore match for Betfair game {betfair_home} vs {betfair_away}")
                 continue
-
+            
             # Update DB with SofaScore live stats
-            self.create_live_game_data(
-                odds_calculation_id=odds_calc.odds_calculation_id,
-                is_live=True,
-                scrape_url=None,
-                live_home_score=matched_sofa_game.get("homeScore", {}).get("current"),
-                live_away_score=matched_sofa_game.get("awayScore", {}).get("current"),
-                match_time=matched_sofa_game.get("currentMinute"),
-                live_home_odds=betfair_game.get("home_odds"),
-                live_draw_odds=betfair_game.get("draw_odds"),
-                live_away_odds=betfair_game.get("away_odds"),
-                shots_on_target_home=matched_sofa_game.get("homeShotsOnTarget"),
-                shots_on_target_away=matched_sofa_game.get("awayShotsOnTarget"),
-                shots_off_target_home=matched_sofa_game.get("homeShotsOffTarget"),
-                shots_off_target_away=matched_sofa_game.get("awayShotsOffTarget"),
-                corners_home=matched_sofa_game.get("cornerKicksHome"),
-                corners_away=matched_sofa_game.get("cornerKicksAway"),
-            )
+            # self.create_live_game_data(
+            #     odds_calculation_id=odds_calc.odds_calculation_id,
+            #     is_live=True if matched_sofa_game.get("status.type", "") == "inprogress" else False,
+            #     scrape_url=None,
+            #     live_home_score=matched_sofa_game.get("homeScore.current", ""),
+            #     live_away_score=matched_sofa_game.get("awayScore.current", ""),
+            #     match_time=matched_sofa_game.get("currentMinute"),
+            #     live_home_odds=betfair_game.get("home_odds"),
+            #     live_draw_odds=betfair_game.get("draw_odds"),
+            #     live_away_odds=betfair_game.get("away_odds"),
+            #     shots_on_target_home=matched_sofa_game.get("homeShotsOnTarget"),
+            #     shots_on_target_away=matched_sofa_game.get("awayShotsOnTarget"),
+            #     shots_off_target_home=matched_sofa_game.get("homeShotsOffTarget"),
+            #     shots_off_target_away=matched_sofa_game.get("awayShotsOffTarget"),
+            #     corners_home=matched_sofa_game.get("cornerKicksHome"),
+            #     corners_away=matched_sofa_game.get("cornerKicksAway"),
+            # )
+
+            # Instead of saving to DB, print the live game data
+            live_game_data = {
+                "odds_calculation_id": odds_calc.odds_calculation_id,
+                "is_live": True if matched_sofa_game.get("status.type", "") == "inprogress" else False,
+                "scrape_url": None,
+                "live_home_score": matched_sofa_game.get("homeScore.current", ""),
+                "live_away_score": matched_sofa_game.get("awayScore.current", ""),
+                "match_time": matched_sofa_game.get("currentMinute"),
+                "live_home_odds": betfair_game.get("home_odds"),
+                "live_draw_odds": betfair_game.get("draw_odds"),
+                "live_away_odds": betfair_game.get("away_odds"),
+                "shots_on_target_home": matched_sofa_game.get("homeShotsOnTarget"),
+                "shots_on_target_away": matched_sofa_game.get("awayShotsOnTarget"),
+                "shots_off_target_home": matched_sofa_game.get("homeShotsOffTarget"),
+                "shots_off_target_away": matched_sofa_game.get("awayShotsOffTarget"),
+                "corners_home": matched_sofa_game.get("cornerKicksHome"),
+                "corners_away": matched_sofa_game.get("cornerKicksAway"),
+            }
+
+            print("🔹 Live game data to save:")
+            for key, value in live_game_data.items():
+                print(f"{key}: {value}")
 
             print(f"✅ Updated live data for {betfair_home} vs {betfair_away}")

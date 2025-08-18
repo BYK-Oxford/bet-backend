@@ -48,20 +48,20 @@ def start_scheduler():
     scheduler = BackgroundScheduler()
 
     # 🔁 Job 1: Live game update
-    @scheduler.scheduled_job(IntervalTrigger(minutes=5))
+    @scheduler.scheduled_job(IntervalTrigger(minutes=2))
     def scheduled_live_update():
         logger.info("🔁 Running scheduled check_and_update_live_games()")
         db = SessionLocal()
         service = LiveGameDataService(db=db)
         try:
-            asyncio.run(service.check_and_update_live_games())
+            service.check_and_update_live_games()
         except Exception as e:
             logger.error(f"❌ Error in live update scheduler: {e}")
         finally:
             db.close()
 
    # 🔁 Job 2: Scraper job (runs Tue & Thu at 1:00 PM)
-    @scheduler.scheduled_job(CronTrigger(day_of_week="tue,thu", hour=13, minute=0))
+    @scheduler.scheduled_job(CronTrigger(hour=4, minute=0))
     def scheduled_scraper_call():
         logger.info("🔁 Running scheduled scraper API calls (Tue/Thu at 1PM)")
         try:
