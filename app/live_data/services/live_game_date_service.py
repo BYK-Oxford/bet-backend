@@ -194,23 +194,23 @@ class LiveGameDataService:
                 continue
             
             # Update DB with SofaScore live stats
-            # self.create_live_game_data(
-            #     odds_calculation_id=odds_calc.odds_calculation_id,
-            #     is_live=True if matched_sofa_game.get("status.type", "") == "inprogress" else False,
-            #     scrape_url=None,
-            #     live_home_score=matched_sofa_game.get("homeScore.current", ""),
-            #     live_away_score=matched_sofa_game.get("awayScore.current", ""),
-            #     match_time=matched_sofa_game.get("currentMinute"),
-            #     live_home_odds=betfair_game.get("home_odds"),
-            #     live_draw_odds=betfair_game.get("draw_odds"),
-            #     live_away_odds=betfair_game.get("away_odds"),
-            #     shots_on_target_home=matched_sofa_game.get("homeShotsOnTarget"),
-            #     shots_on_target_away=matched_sofa_game.get("awayShotsOnTarget"),
-            #     shots_off_target_home=matched_sofa_game.get("homeShotsOffTarget"),
-            #     shots_off_target_away=matched_sofa_game.get("awayShotsOffTarget"),
-            #     corners_home=matched_sofa_game.get("cornerKicksHome"),
-            #     corners_away=matched_sofa_game.get("cornerKicksAway"),
-            # )
+            self.create_live_game_data(
+                odds_calculation_id=odds_calc.odds_calculation_id,
+                is_live=True if matched_sofa_game.get("status.type", "") == "inprogress" else False,
+                scrape_url=None,
+                live_home_score=matched_sofa_game.get("homeScore.current", ""),
+                live_away_score=matched_sofa_game.get("awayScore.current", ""),
+                match_time=matched_sofa_game.get("currentMinute"),
+                live_home_odds=betfair_game.get("home_odds"),
+                live_draw_odds=betfair_game.get("draw_odds"),
+                live_away_odds=betfair_game.get("away_odds"),
+                shots_on_target_home=matched_sofa_game.get("homeShotsOnTarget"),
+                shots_on_target_away=matched_sofa_game.get("awayShotsOnTarget"),
+                shots_off_target_home=matched_sofa_game.get("homeShotsOffTarget"),
+                shots_off_target_away=matched_sofa_game.get("awayShotsOffTarget"),
+                corners_home=matched_sofa_game.get("cornerKicksHome"),
+                corners_away=matched_sofa_game.get("cornerKicksAway"),
+            )
 
             # Instead of saving to DB, print the live game data
             live_game_data = {
