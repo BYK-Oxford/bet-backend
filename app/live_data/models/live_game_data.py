@@ -26,6 +26,7 @@ class LiveGameData(Base):
     live_away_odds = Column(Float, nullable=True)
 
     # Match Stats
+    
     shots_on_target_home = Column(Integer, nullable=True)
     shots_on_target_away = Column(Integer, nullable=True)
     shots_off_target_home = Column(Integer, nullable=True)
