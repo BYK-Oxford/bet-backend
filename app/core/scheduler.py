@@ -63,7 +63,7 @@ def start_scheduler():
    # 🔁 Job 2: Scraper job (runs Tue & Thu at 1:00 PM)
     @scheduler.scheduled_job(CronTrigger(hour=4, minute=0))
     def scheduled_scraper_call():
-        logger.info("🔁 Running scheduled scraper API calls (Tue/Thu at 1PM)")
+        logger.info("🔁 Running scheduled scraper API calls (everyday at 4AM)")
         try:
             asyncio.run(call_scraper_api())
         except Exception as e:
