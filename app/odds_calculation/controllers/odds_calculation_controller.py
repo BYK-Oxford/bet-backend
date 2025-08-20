@@ -27,15 +27,42 @@ def get_all_calculated_odds(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get("/test-network")
+@router.post("/test-network")
 def test_network():
     try:
-        r = requests.get(
+        r = requests.post(
             "https://identitysso-cert.betfair.com/api/certlogin", timeout=5
         )
+        
+        ip = requests.get("https://api.ipify.org?format=json")
+        print("Container public IP:", ip.json()["ip"])
         return {"status": "success", "code": r.status_code}
     except Exception as e:
         return {"status": "failed", "error": str(e)}
+    
+
+@router.post("/test-betfair-post")
+def test_betfair_post():
+    url = "https://identitysso-cert.betfair.com/api/certlogin"
+    cert = ("/app/app/BetfairCerts/client-2048.crt", "/app/app/BetfairCerts/client-2048.key")
+
+    payload = {
+        "username": "Sharburrys07@yahoo.com",
+        "password": "BYK0xf0rd!"
+    }
+    headers = {
+        "X-Application": "OTCBYdanqSKplEmM",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    try:
+        r = requests.post(url, data=payload, cert=cert, headers=headers, timeout=5)
+        
+        ip = requests.get("https://api.ipify.org?format=json")
+        print("Container public IP:", ip.json()["ip"])
+        return {"status_code": r.status_code, "response": r.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 @router.post("/calculate-ratios/")
 async def calculate_ratios(db: Session = Depends(get_db)):
