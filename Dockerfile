@@ -5,6 +5,10 @@ FROM python:3.13.2-slim
 ENV PYTHONUNBUFFERED 1
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
+
+ENV DATABASE_URL="postgresql://postgres.zgjotpgtzqiqimolgper:B11rry2025**@aws-0-eu-west-2.pooler.supabase.com:5432/postgres"
+
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     libnss3 \
