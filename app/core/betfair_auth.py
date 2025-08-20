@@ -6,13 +6,17 @@ class BetfairAuthService:
         self.username = username
         self.password = password
         self.app_key = app_key
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # this gets you to app/
-        self.certs_path = os.path.join(base_dir, 'BetfairCerts')  # app/BetfairCerts
+        self.base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # this gets you to app/
+        self.certs_path = os.path.join(self.base_dir, 'BetfairCerts')  # app/BetfairCerts
 
         self.login_url = "https://identitysso-cert.betfair.com/api/certlogin"
     
     def get_session_token(self):
         cert = (f"{self.certs_path}/client-2048.crt", f"{self.certs_path}/client-2048.key")
+        
+        print("Base Directory path:", self.base_dir)
+        print("Cert path:", cert)
+        print("Cert files exist?", os.path.exists(cert[0]), os.path.exists(cert[1]))    
         payload = {
             'username': self.username,
             'password': self.password
