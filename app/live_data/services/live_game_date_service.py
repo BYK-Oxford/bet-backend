@@ -161,6 +161,14 @@ class LiveGameDataService:
             betfair_game = betfair_live_dict.get(event_id)
             if not betfair_game:
                 print(f"No live Betfair match for event_id: {event_id}")
+                 # ✅ If it existed before and was live, mark finished
+                existing_live_data = self.get_live_game_data(odds_calc.odds_calculation_id)
+                if existing_live_data and existing_live_data.is_live:
+                    print(f"Marking {event_name} as finished (Betfair no longer shows it).")
+                    self.create_live_game_data(
+                        odds_calculation_id=odds_calc.odds_calculation_id,
+                        is_live=False
+                    )
                 continue
 
             # Get Betfair team names
@@ -196,7 +204,7 @@ class LiveGameDataService:
             # Update DB with SofaScore live stats
             self.create_live_game_data(
                 odds_calculation_id=odds_calc.odds_calculation_id,
-                is_live=True if matched_sofa_game.get("status.type", "") == "inprogress" else False,
+                is_live=True,
                 scrape_url=None,
                 live_home_score=matched_sofa_game.get("homeScore.current", ""),
                 live_away_score=matched_sofa_game.get("awayScore.current", ""),
