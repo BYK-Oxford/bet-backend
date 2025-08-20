@@ -119,7 +119,7 @@ class BetfairService:
     def get_filtered_competitions(self) -> Dict[str, Dict]:
        
         target_names = [
-                "English Premier League","English Championship","Scottish Premiership",
+                "English Premier League","English Sky Bet Championship","Scottish Premiership",
                 "Scottish Championship","Turkish Super League","Spanish La Liga","Spanish Segunda Division",
                 "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A"
                 ]
@@ -338,6 +338,7 @@ class BetfairService:
         league_mapping = {
             "English Premier League": "E0",  # English Premier League
             "English Championship": "E1",  # English Championship
+            "English Sky Bet Championship": "E1",  # English Championship
             "Scottish Premiership": "SC0", # Scottish Premiership
             "Scottish Championship": "SC1", # Scottish Championship
             "Spanish La Liga": "SP1",  # Spanish La Liga

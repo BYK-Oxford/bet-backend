@@ -5,6 +5,7 @@ from app.odds_calculation.services.odds_calculation_service import OddsCalculati
 from app.new_odds.services.new_odds_service import NewOddsService
 from app.odds_calculation.services.odds_retrieval_service import OddsRetrievalService
 from datetime import datetime
+import requests
 
 router = APIRouter()
 
@@ -24,6 +25,17 @@ def get_all_calculated_odds(db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get("/test-network")
+def test_network():
+    try:
+        r = requests.get(
+            "https://identitysso-cert.betfair.com/api/certlogin", timeout=5
+        )
+        return {"status": "success", "code": r.status_code}
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
 
 @router.post("/calculate-ratios/")
 async def calculate_ratios(db: Session = Depends(get_db)):

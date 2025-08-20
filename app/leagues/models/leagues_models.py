@@ -9,6 +9,7 @@ class League(Base):
     league_code = Column(String)
     league_name = Column(String, unique=True, nullable=False)
     country_id = Column(String, ForeignKey("countries.country_id"))
+    league_alternate_name = Column(String, unique=True, nullable=True)
 
     country = relationship("Country", back_populates="leagues")
     teams = relationship("Team", back_populates="league")
