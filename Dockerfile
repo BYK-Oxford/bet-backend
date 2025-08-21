@@ -3,7 +3,6 @@ FROM python:3.13.2-slim
 
 # Set environment variables for Playwright installation
 ENV PYTHONUNBUFFERED 1
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 
 ENV DATABASE_URL="postgresql://postgres.zgjotpgtzqiqimolgper:B11rry2025**@aws-0-eu-west-2.pooler.supabase.com:5432/postgres"
@@ -22,21 +21,24 @@ RUN apt-get update && apt-get install -y \
     libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Playwright dependencies
 RUN pip install --upgrade pip
-RUN pip install playwright
+RUN pip install "playwright==1.51.0"
+RUN playwright install chromium --with-deps
 
-# Install Playwright browsers
-RUN playwright install --with-deps
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy your project files into the container
-COPY . /app
+
+COPY requirements.txt .
+
+
 
 # Install Python dependencies
 RUN pip install -r requirements.txt -v
+
+# Copy your project files into the container
+COPY . /app
 
 # Expose the port your application will run on (e.g., 8000)
 EXPOSE 8000

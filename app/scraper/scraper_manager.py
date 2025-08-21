@@ -92,8 +92,12 @@ class ScraperManager:
             if not league_code:
                 raise ValueError(f"Unknown URL for TheFishy scraper: {url}")
 
-            page_content = await get_fishy_page_content(url)
-            print(f"[DEBUG] Got page content for {url} (length={len(page_content)})")
+            try:
+                page_content = await get_fishy_page_content(url)
+            except Exception as e:
+                print(f"[ERROR] Failed to get page content for {url}: {e}")
+                return f"TheFishy Scraping: Failed - {str(e)}"
+
 
             league_data = parse_fishy_league_standing_data(page_content)
             print(f"[DEBUG] Parsed {len(league_data)} teams from {url}")
