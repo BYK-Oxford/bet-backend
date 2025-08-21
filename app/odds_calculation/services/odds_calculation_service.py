@@ -10,12 +10,15 @@ from app.odds_calculation.services.odds_saving_service import OddsSavingService
 from app.leagues.models.leagues_models import League
 import re
 import os
-
+import pandas as pd
+import json
 
 class OddsCalculationService:
     LAST_SEASON_ID = None
     CURRENT_SEASON_ID=None
     CURRENT_LEAGUE_ID = None
+    # Class-level attribute for aliases
+    TEAM_ALIASES = {}
 
     
     LEAGUE_TIERS = {
@@ -31,6 +34,14 @@ class OddsCalculationService:
     def __init__(self, db: Session):
         self.db = db
         self.odds_saving_service = OddsSavingService(db)
+        # Load aliases once
+        if not self.__class__.TEAM_ALIASES:  # only if empty
+            try:
+                with open("app/teams/teams_aliases.json", "r") as f:
+                    self.__class__.TEAM_ALIASES = json.load(f)
+            except FileNotFoundError:
+                print("[WARN] teams_aliases.json not found. Using empty aliases.")
+                self.__class__.TEAM_ALIASES = {}
 
     async def calculate_ratios_for_matches(self, new_matches):
         """Calculate win, draw, and loss ratios for a list of matches and save them."""
@@ -225,19 +236,40 @@ class OddsCalculationService:
         if record:
             played, wins, draws, losses = record.played, record.wins, record.draws, record.losses
         else:
-            # Fallback to CSV
+             # Fallback to CSV
             csv_path = os.path.join(os.path.dirname(__file__), "last_season.csv")
             if os.path.exists(csv_path):
                 df = pd.read_csv(csv_path)
-                team_row = df[df["Team"].str.lower() == team_name.lower()]
-                if not team_row.empty:
-                    row = team_row.iloc[0]
-                    played = row.get("Played", 0)
-                    wins = row.get("Wins", 0)
-                    draws = row.get("Draws", 0)
-                    losses = row.get("Losses", 0)
+                team_row = None
+
+                # Normalize CSV names
+                df["Team_clean"] = df["Team"].str.lower().str.replace(r"[^a-z0-9]", "", regex=True)
+                team_name_clean = team_name.lower().replace(" ", "").replace("&", "")
+
+                team_row = None
+                for real_name, aliases in self.__class__.TEAM_ALIASES.items():
+                    for alias in aliases:
+                        alias_clean = alias.lower().replace(" ", "").replace("&", "")
+                        if team_name_clean == alias_clean:
+                            # Try to find a matching row in CSV
+                            for csv_alias in aliases:
+                                csv_alias_clean = csv_alias.lower().replace(" ", "").replace("&", "")
+                                matched_row = df[df["Team_clean"] == csv_alias_clean]
+                                if not matched_row.empty:
+                                    team_row = matched_row.iloc[0]
+                                    break
+                            if team_row is not None:
+                                break
+                    if team_row is not None:
+                        break
+                
+                if team_row is not None:
+                    played = float(team_row.get("Played", 0))
+                    wins = float(team_row.get("Wins", 0))
+                    draws = float(team_row.get("Draws", 0))
+                    losses = float(team_row.get("Losses", 0))
                 else:
-                    print(f"[WARN] Team {team_name} not found in last_season.csv")
+                    print(f"[WARN] Team {team_name} not found in last_season.csv using aliases")
                     played, wins, draws, losses = 0, 0, 0, 0
             else:
                 print(f"[WARN] last_season.csv not found")
@@ -249,9 +281,9 @@ class OddsCalculationService:
         "draws": draws,
         "losses": losses,
         "total_played": played,
-        "wins_ratio": wins / played if played else 0,
-        "draws_ratio": draws / played if played else 0,
-        "losses_ratio": losses / played if played else 0
+        "wins_ratio": float(wins / played) if played else 0,
+        "draws_ratio": float(draws / played) if played else 0,
+        "losses_ratio": float(losses / played) if played else 0
         }
 
         print(f"[DEBUG] Season Perf | {team_name} ({season_name}) => {result}")
