@@ -19,6 +19,8 @@ class OddsCalculationService:
     CURRENT_LEAGUE_ID = None
     # Class-level attribute for aliases
     TEAM_ALIASES = {}
+    HOME_TEAM_STATUS = None
+    AWAY_TEAM_STATUS = None
 
     
     LEAGUE_TIERS = {
@@ -132,6 +134,8 @@ class OddsCalculationService:
         print(f"[DEBUG] {home_team.team_name if home_team else home_team_id} last={home_last_league} current={home_current_league} => {home_status}")
         print(f"[DEBUG] {away_team.team_name if away_team else away_team_id} last={away_last_league} current={away_current_league} => {away_status}")
 
+        self.__class__.HOME_TEAM_STATUS = home_status
+        self.__class__.AWAY_TEAM_STATUS = away_status
         
         # Calculate weighted draw for home and away teams
         weighted_draw_home = await self.calculate_weighted_draw_ratio(home_team_data["current_season"], home_team_data["last_season"])
@@ -148,22 +152,150 @@ class OddsCalculationService:
             head_to_head['total_matches']
         )
         print(
-        f"[DEBUG] Final Result | {home_team.team_name if home_team else home_team_id} "
+        f"[DEBUG]Result | {home_team.team_name if home_team else home_team_id} "
         f"vs {away_team.team_name if away_team else away_team_id} => "
         f"HomeWin={final_home_win_ratio:.2f}, Draw={draw_chance:.2f}, "
         f"AwayWin={1 - (final_home_win_ratio + draw_chance):.2f}"
         )
 
+        adjusted_home, adjusted_away, adjusted_draw = self.adjust_ratios_by_status(final_home_win_ratio,(1 - (final_home_win_ratio + draw_chance)),draw_chance,home_status,away_status)
+        print(f"Adj after league stats : ADJ_HOME {adjusted_home}, ADJ_AWAY {adjusted_away}, ADJ_DRW {adjusted_draw}")
+        final_adj_home, final_adj_away, final_adj_draw = self.final_95_check(adjusted_home, adjusted_away, adjusted_draw)
+        print(f"Adj after 0.95 : ADJ_HOME {final_adj_home}, ADJ_AWAY {final_adj_away}, ADJ_DRW {final_adj_draw}")
+
         return {
             "home_team": home_team_data,
             "away_team": away_team_data,
             "head_to_head": head_to_head,
-            "final_draw_chance": round(draw_chance, 2),
+            "final_draw_chance": round(final_adj_draw,2),
             "weighted home draw": weighted_draw_home,
             "weighted away draw": weighted_draw_away,
-            "final_home_win_ratio": round(final_home_win_ratio, 2),
-            "final_away_win_ratio": round(1 - (final_home_win_ratio + draw_chance),2),
-        }    
+            "final_home_win_ratio": round(final_adj_home,2),
+            "final_away_win_ratio": round(final_adj_away,2),
+        }  
+    
+    def final_95_check(
+        self,
+        adj_home_win: float,
+        adj_away_win: float,
+        adj_draw: float,
+    )-> tuple[float, float, float]:
+        '''
+            check if any part is above 0.95 and start adjusting both
+        
+        '''
+        if adj_home_win >= 0.95:
+            adjustment2 = 0.10
+            to_draw2 = adjustment2 * 0.30
+            to_other2 = adjustment2 - to_draw2
+            final_adj_home = adj_home_win - adjustment2
+            final_adj_draw = adj_draw + to_draw2
+            final_adj_away = adj_away_win + to_other2
+        elif adj_away_win >=0.95:
+            adjustment2 = 0.10
+            to_draw2 = adjustment2 * 0.30
+            to_other2 = adjustment2 - to_draw2
+            final_adj_away = adj_away_win - adjustment2
+            final_adj_draw = adj_draw + to_draw2
+            final_adj_home = adj_home_win + to_other2
+        else:
+            final_adj_away = adj_away_win
+            final_adj_draw = adj_draw
+            final_adj_home = adj_home_win
+
+
+        return (final_adj_home, final_adj_away, final_adj_draw)
+
+    def adjust_ratios_by_status(
+        self,
+        home_win: float,
+        away_win: float,
+        draw: float,
+        home_status: str,
+        away_status: str
+    ) -> tuple[float, float, float]:
+        """
+        Adjusts win/draw ratios based on team status (promoted, relegated, stayed).
+        
+        Rules:
+        - stayed vs stayed → no adjustment
+        - promoted vs stayed → promoted loses 0.20
+            - 20% of 0.20 → draw
+            - 80% of 0.20 → stayed team
+        - relegated vs promoted → promoted loses 0.30
+            - 20% of 0.30 → draw
+            - 80% of 0.30 → relegated team
+        """
+
+        adjustment = 0.0
+        to_draw = 0.0
+        to_other = 0.0
+        home_win_adjusted, away_win_adjusted, draw_adjusted = home_win, away_win , draw
+
+        # Case 1: stayed vs stayed & promoted vs promoted & relegated vs relegated
+        if home_status == "stayed" and away_status == "stayed":
+            return (home_win_adjusted, away_win_adjusted, draw_adjusted)
+        elif home_status == "promoted" and away_status == "promted":
+            return (home_win_adjusted, away_win_adjusted, draw_adjusted)
+        elif home_status == "relegated" and away_status == "relegated":
+            return (home_win_adjusted, away_win_adjusted, draw_adjusted)
+
+        # Case 2: promoted vs stayed
+        if home_status == "promoted" and away_status == "stayed" and home_win > 0.20:
+            adjustment = 0.20
+            to_draw = adjustment * 0.20 
+            to_other = adjustment-to_draw
+            home_win_adjusted = home_win - adjustment
+            away_win_adjusted = away_win + to_other
+            draw_adjusted = draw + to_draw
+
+        elif home_status == "stayed" and away_status == "promoted" and away_win > 0.20:
+            adjustment = 0.20
+            to_draw = adjustment * 0.20
+            to_other = adjustment-to_draw
+            away_win_adjusted = away_win - adjustment
+            home_win_adjusted = home_win + to_other
+            draw_adjusted = draw + to_draw
+
+        #case 3 relegated vs stayed con
+        if home_status == "relegated" and away_status == "stayed" and away_win > 0.20:
+            adjustment = 0.20
+            to_draw = adjustment * 0.20 
+            to_other = adjustment-to_draw
+            home_win_adjusted = home_win + to_other
+            away_win_adjusted = away_win - adjustment
+            draw_adjusted = draw + to_draw
+
+        elif home_status == "stayed" and away_status == "relegated" and home_win > 0.20:
+            adjustment = 0.20
+            to_draw = adjustment * 0.20
+            to_other = adjustment-to_draw
+            away_win_adjusted = away_win + to_other
+            home_win_adjusted = home_win - adjustment
+            draw_adjusted = draw + to_draw
+
+        # Case 3: promoted vs relegated
+        elif home_status == "promoted" and away_status == "relegated" and home_win > 0.30:
+            adjustment = 0.30
+            to_draw = adjustment * 0.20
+            to_other = adjustment-to_draw
+            home_win_adjusted = home_win - adjustment
+            away_win_adjusted = away_win + to_other
+            draw_adjusted = draw + to_draw
+
+        elif home_status == "relegated" and away_status == "promoted" and away_win > 0.30:
+            adjustment = 0.30
+            to_draw = adjustment * 0.20
+            to_other = adjustment-to_draw
+            away_win_adjusted = away_win - adjustment
+            home_win_adjusted = home_win +  to_other
+            draw_adjusted = draw + to_draw
+
+        else:
+            return (home_win_adjusted, away_win_adjusted, draw_adjusted)
+
+        return (home_win_adjusted, away_win_adjusted, draw_adjusted)
+  
 
     def get_previous_season_year(self, season_year: str) -> str:
         """Get the previous season year given the current season year."""
