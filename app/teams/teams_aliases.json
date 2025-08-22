@@ -145,7 +145,7 @@
   "Fenerbahce": ["Fenerbahce", "Fenerbahçe"],
   "Galatasaray": ["Galatasaray"],
   "Gaziantep FK": ["Gaziantep", "Gaziantep FK", "Gazisehir Gaziantep"],
-  "Goztepe": ["Goztepe", "Göztepe"],
+  "Goztepe": ["Goztepe", "Goztep", "Göztepe"],
   "Hatayspor": ["Hatayspor"],
   "Istanbul Basaksehir": [
     "Istanbul Basaksehir",
@@ -246,7 +246,7 @@
   "Villarreal": ["Villarreal", "Villarreal CF"],
   "Elche": ["Elche", "Elche CF"],
   "Betis": ["Betis", "Real Betis"],
-  "Espanyol": ["Espanyol", "RCD Espanyol"],
+  "Espanyol": ["Espanyol", "RCD Espanyol", "Espanol"],
   "Granada": ["Granada", "Granada CF"],
   "Ath Bilbao": ["Ath Bilbao", "Athletic Bilbao", "Athletic Club"],
   "Real Sociedad": ["Real Sociedad", "Real Sociedad de Fútbol", "Sociedad"],
@@ -468,7 +468,7 @@
   "Wrexham": ["Wrexham"],
   "Wehen": ["Wehen", "Wehen Wiesbaden"],
   "Dynamo": ["Dynamo", "Dynamo Dresden", "SG Dynamo Dresden"],
-  "Ingolstadt": ["Ingolstadt", "Ingolstadt"],
+  "Ingolstadt": ["Ingolstadt", "FC Ingolstadt 04"],
   "Logrones": ["Logrones", "UD Logrones"],
   "Andorra": ["Andorra", "FC Andorra", "Andorra CF"]
 }
