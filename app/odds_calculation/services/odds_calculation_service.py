@@ -167,11 +167,11 @@ class OddsCalculationService:
             "home_team": home_team_data,
             "away_team": away_team_data,
             "head_to_head": head_to_head,
-            "final_draw_chance": round(final_adj_draw,2),
+            "final_draw_chance": round(final_adj_draw,3),
             "weighted home draw": weighted_draw_home,
             "weighted away draw": weighted_draw_away,
-            "final_home_win_ratio": round(final_adj_home,2),
-            "final_away_win_ratio": round(final_adj_away,2),
+            "final_home_win_ratio": round(final_adj_home,3),
+            "final_away_win_ratio": round(final_adj_away,3),
         }  
     
     def final_95_check(

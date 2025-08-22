@@ -93,8 +93,11 @@
   "Hearts": ["Hearts", "Heart of Midlothian", "Hearts FC"],
   "Hibernian": ["Hibernian", "Hibs", "Hibernian FC"],
   "Motherwell": ["Motherwell", "Motherwell FC"],
+  "Kilmarnock": ["Kilmarnock"],
   "Dundee United": ["Dundee United", "Dundee Utd", "Dundee United FC"],
   "Dundee": ["Dundee", "Dundee FC"],
+  "Arbroath": ["Arbroath"],
+  "Morton": ["Morton", "Greenock Morton"],
   "St. Johnstone": [
     "St. Johnstone",
     "St Johnstone",
@@ -103,7 +106,8 @@
   ],
   "St. Mirren": ["St. Mirren", "St Mirren FC", "St. Mirren FC", "St Mirren"],
   "Livingston": ["Livingston", "Livingston FC"],
-  "Ross County": ["Ross County", "Ross County FC"],
+  "Ross County": ["Ross County", "Ross County FC", "Ross Co"],
+  "Airdrieonians": ["Airdrieonians"],
 
   "Ayr United": ["Ayr United", "Ayr Utd", "Ayr United FC", "Ayr"],
   "Dunfermline Athletic": [
@@ -112,7 +116,12 @@
     "Dunfermline FC"
   ],
   "Partick Thistle": ["Partick Thistle", "Partick", "Partick Thistle FC"],
-  "Queen's Park": ["Queen's Park", "Queens Park", "Queen's Park FC"],
+  "Queen's Park": [
+    "Queen's Park",
+    "Queens Park",
+    "Queens Park FC",
+    "Queen's Park FC"
+  ],
   "Raith Rovers": ["Raith Rovers", "Raith", "Raith Rovers FC", "Raith Rvs"],
   "Inverness Caledonian Thistle": [
     "Inverness Caledonian Thistle",
@@ -170,6 +179,7 @@
   "Bologna": ["Bologna", "Bologna FC 1909", "Bologna FC"],
   "Cagliari": ["Cagliari", "Cagliari Calcio"],
   "Empoli": ["Empoli", "Empoli FC"],
+  "Padova": ["Padova"],
   "Fiorentina": ["Fiorentina", "ACF Fiorentina"],
   "Genoa": ["Genoa", "Genoa CFC"],
   "Inter": ["Inter", "Inter Milan", "FC Internazionale Milano"],
@@ -189,6 +199,7 @@
   "Monza": ["Monza", "AC Monza"],
 
   "Frosinone": ["Frosinone", "Frosinone Calcio"],
+  "Calcio Avellino SSD": ["Calcio Avellino SSD", "Avellino Calcio", "Avellino"],
   "Pordenone": ["Pordenone", "Pordenone Calcio"],
   "Cittadella": ["Cittadella", "AS Cittadella"],
   "Reggina": ["Reggina", "Reggina Calcio"],
@@ -210,16 +221,19 @@
     "US Alessandria Calcio"
   ],
   "Como": ["Como", "Calcio Como"],
+  "Pescara": ["Pescara"],
   "Cosenza": ["Cosenza", "Cosenza Calcio"],
-  "Sudtirol": ["Sudtirol", "FC Südtirol", "FC Sudtirol"],
+  "Sudtirol": ["Sudtirol", "FC Südtirol", "FC Sudtirol", "Südtirol"],
   "Catanzaro": ["Catanzaro", "US Catanzaro 1929", "US Catanzaro"],
   "Palermo": ["Palermo", "US Città di Palermo"],
-  "Bari": ["Bari", "SSC Bari"],
+  "Reggiana": ["Reggiana"],
+  "Bari": ["Bari", "SSC Bari", "SSD Bari"],
   "Modena": ["Modena", "Modena FC"],
   "Cesena": ["Cesena", "AC Cesena"],
   "Carrarese": ["Carrarese", "Carrarese Calcio"],
-  "Juve Stabia": ["Juve Stabia", "SS Juve Stabia"],
+  "Juve Stabia": ["Juve Stabia", "SS Juve Stabia", "Stabia"],
   "Mantova": ["Mantova", "AC Mantova"],
+  "Entella": ["Entella", "Virtus Entella"],
 
   "Valencia": ["Valencia", "Valencia CF"],
   "Cadiz": ["Cadiz", "Cadiz CF", "Cádiz"],
@@ -331,7 +345,12 @@
   "Bochum": ["Bochum", "VfL Bochum 1848", "VfL Bochum", "VFL Bochum"],
   "Ein Frankfurt": ["Ein Frankfurt", "Eintracht Frankfurt", "Frankfurt"],
   "Freiburg": ["Freiburg", "SC Freiburg"],
-  "Greuther Furth": ["Greuther Furth", "SpVgg Greuther Fürth"],
+  "Greuther Furth": [
+    "Greuther Furth",
+    "SpVgg Greuther Fürth",
+    "Fürth",
+    "SpVgg Greuther Furth"
+  ],
   "Hertha": ["Hertha", "Hertha BSC", "Hertha Berlin"],
   "Leverkusen": ["Leverkusen", "Bayer 04 Leverkusen", "Bayer Leverkusen"],
   "Hoffenheim": ["Hoffenheim", "Hoffenheim", "TSG Hoffenheim"],
@@ -346,7 +365,7 @@
   ],
   "Werder Bremen": ["Werder Bremen", "SV Werder Bremen", "Bremen"],
   "Heidenheim": ["Heidenheim", "1. FC Heidenheim", "FC Heidenheim"],
-  "Holstein Kiel": ["Holstein Kiel", "Holstein Kiel"],
+  "Holstein Kiel": ["Holstein Kiel", "Holstein Kiel", "Kiel"],
   "St. Pauli": ["St. Pauli", "St Pauli", "FC St. Pauli", "FC St Pauli"],
 
   "Kaiserslautern": [
@@ -360,18 +379,26 @@
   "Braunschweig": ["Braunschweig", "Eintracht Braunschweig"],
   "Hansa Rostock": ["Hansa Rostock", "F.C. Hansa Rostock"],
   "Paderborn": ["Paderborn", "SC Paderborn 07", "SC Paderborn"],
-  "Darmstadt": ["Darmstadt", "SV Darmstadt 98", "SV Darmstadt"],
+  "Darmstadt": ["Darmstadt", "SV Darmstadt 98", "SV Darmstadt", "Darmstadt 98"],
   "Fortuna Dusseldorf": [
     "Fortuna Dusseldorf",
     "Fortuna Düsseldorf",
-    "Dusseldorf"
+    "Dusseldorf",
+    "Fortuna"
   ],
-  "Nurnberg": ["Nurnberg", "1. FC Nürnberg", "FC Nürnberg"],
+  "Nurnberg": ["Nurnberg", "1. FC Nürnberg", "FC Nürnberg", "Nürnberg"],
   "Hannover": ["Hannover", "Hannover 96"],
   "Hamburg": ["Hamburg", "Hamburger SV", "Hamburger", "HSV"],
   "Karlsruhe": ["Karlsruhe", "Karlsruher SC"],
   "Schalke": ["Schalke", "FC Schalke 04", "FC Schalke", "Schalke 04"],
-  "Preussen Munster": ["Preussen Munster", "Preussen", "Preußen Münster"],
+  "Preussen Munster": [
+    "Preussen Munster",
+    "Preussen",
+    "Preußen Münster",
+    "Preußen",
+    "Münster",
+    "Munster"
+  ],
   "Elversberg": ["Elversberg", "SV 07 Elversberg", "SV Elversberg"],
   "SSV Ulm": ["SSV Ulm", "SSV Ulm 1846", "Ulm"],
   "Paris Saint-Germain": [
@@ -440,7 +467,7 @@
   "Oxford": ["Oxford Utd", "Oxford", "Oxford United"],
   "Wrexham": ["Wrexham"],
   "Wehen": ["Wehen", "Wehen Wiesbaden"],
-  "Dynamo": ["Dynamo", "Dynamo Dresden"],
+  "Dynamo": ["Dynamo", "Dynamo Dresden", "SG Dynamo Dresden"],
   "Ingolstadt": ["Ingolstadt", "Ingolstadt"],
   "Logrones": ["Logrones", "UD Logrones"],
   "Andorra": ["Andorra", "FC Andorra", "Andorra CF"]

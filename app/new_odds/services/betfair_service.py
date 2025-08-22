@@ -121,7 +121,7 @@ class BetfairService:
         target_names = [
                 "English Premier League","English Sky Bet Championship","Scottish Premiership",
                 "Scottish Championship","Turkish Super League","Spanish La Liga","Spanish Segunda Division",
-                "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A"
+                "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A", "Italian Serie B"
                 ]
         
         event_type_id = "1"  # Soccer
