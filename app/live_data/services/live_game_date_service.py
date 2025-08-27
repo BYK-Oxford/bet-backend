@@ -165,10 +165,9 @@ class LiveGameDataService:
                 existing_live_data = self.get_live_game_data(odds_calc.odds_calculation_id)
                 if existing_live_data and existing_live_data.is_live:
                     print(f"Marking {event_name} as finished (Betfair no longer shows it).")
-                    self.create_live_game_data(
-                        odds_calculation_id=odds_calc.odds_calculation_id,
-                        is_live=False
-                    )
+                    existing_live_data.is_live = False
+                    existing_live_data.last_updated = datetime.now(timezone.utc)
+                    self.db.commit()
                 continue
 
             # Get Betfair team names

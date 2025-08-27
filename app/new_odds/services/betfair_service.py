@@ -448,15 +448,15 @@ class BetfairService:
 
                 if runner_book:
                     backs = runner_book.get("ex", {}).get("availableToBack", [])
-                    best_back_price = f"{backs[0]['price']}" if backs else "N/A"
+                    best_back_price = f"{backs[0]['price']}" if backs else 0.0
                     runner_odds[runner_name.lower()] = best_back_price
 
             # Ensure we have all three: home, draw, away
-            home, draw, away = "N/A", "N/A", "N/A"
+            home, draw, away = 0.0,0.0,0.0
             if len(runners) == 3:
-                home = runner_odds.get(runners[0]["runnerName"].lower(), "N/A")
-                draw = runner_odds.get(runners[1]["runnerName"].lower(), "N/A")
-                away = runner_odds.get(runners[2]["runnerName"].lower(), "N/A")
+                home = runner_odds.get(runners[0]["runnerName"].lower(), 0.0)
+                draw = runner_odds.get(runners[1]["runnerName"].lower(), 0.0)
+                away = runner_odds.get(runners[2]["runnerName"].lower(), 0.0)
 
             game_data = {
                 "event_id": event_id,
