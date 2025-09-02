@@ -8,7 +8,7 @@ class BettingOddsService:
         self.db = db
 
     def create_betting_odds(self, odds_data: dict):
-        """Create or update betting odds for a match."""
+        """Create or update betting odds for a match.!"""
         match = self.db.query(Match).filter(Match.match_id == odds_data["match_id"]).first()
 
         if not match:
