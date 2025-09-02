@@ -5,7 +5,7 @@ from app.core.database import Base
 class Match(Base):
     __tablename__ = "matches"
 
-    # new
+    # host
 
     match_id = Column(String, primary_key=True, index=True)
     date = Column(DateTime, nullable=False)
