@@ -5,6 +5,8 @@ from app.core.database import Base
 class Match(Base):
     __tablename__ = "matches"
 
+    # new
+
     match_id = Column(String, primary_key=True, index=True)
     date = Column(DateTime, nullable=False)
     league_id = Column(String, ForeignKey("leagues.league_id"))
