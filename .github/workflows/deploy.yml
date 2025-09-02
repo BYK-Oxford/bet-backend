@@ -31,4 +31,4 @@ jobs:
             docker build -t fastapi_app:latest .
             docker stop fastapi_app || true
             docker rm fastapi_app || true
-            docker run -d --name fastapi_app -p 8000:8000 --restart always fastapi_app:latest
+            docker run -d --name fastapi_app -p 80:8000 --restart always fastapi_app:latest
