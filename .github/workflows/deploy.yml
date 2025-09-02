@@ -1,0 +1,34 @@
+name: Deploy FastAPI to UpCloud
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to UpCloud via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.UPCLOUD_HOST }}
+          username: ${{ secrets.UPCLOUD_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root || exit
+            if [ -d "fastapi-app" ]; then
+              cd fastapi-app
+              git reset --hard
+              git pull origin main
+            else
+              git clone https://github.com/${{ github.repository }} fastapi-app
+              cd fastapi-app
+            fi
+            docker build -t fastapi_app:latest .
+            docker stop fastapi_app || true
+            docker rm fastapi_app || true
+            docker run -d --name fastapi_app -p 8000:8000 --restart always fastapi_app:latest
