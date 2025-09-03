@@ -124,15 +124,15 @@ class OddsCalculationService:
         )
         away_current_league = away_current_league_row.league_code if away_current_league_row else None
 
-        print(f"[DEBUG] Home current league code: {home_current_league}, Away current league code: {away_current_league}")
+        #print(f"[DEBUG] Home current league code: {home_current_league}, Away current league code: {away_current_league}")
 
 
 
         home_status = self.get_team_status(home_last_league, home_current_league)
         away_status = self.get_team_status(away_last_league, away_current_league)
 
-        print(f"[DEBUG] {home_team.team_name if home_team else home_team_id} last={home_last_league} current={home_current_league} => {home_status}")
-        print(f"[DEBUG] {away_team.team_name if away_team else away_team_id} last={away_last_league} current={away_current_league} => {away_status}")
+        #print(f"[DEBUG] {home_team.team_name if home_team else home_team_id} last={home_last_league} current={home_current_league} => {home_status}")
+        #print(f"[DEBUG] {away_team.team_name if away_team else away_team_id} last={away_last_league} current={away_current_league} => {away_status}")
 
         self.__class__.HOME_TEAM_STATUS = home_status
         self.__class__.AWAY_TEAM_STATUS = away_status
@@ -151,17 +151,17 @@ class OddsCalculationService:
             head_to_head.get("home_win_ratio", 0.0),
             head_to_head['total_matches']
         )
-        print(
-        f"[DEBUG]Result | {home_team.team_name if home_team else home_team_id} "
-        f"vs {away_team.team_name if away_team else away_team_id} => "
-        f"HomeWin={final_home_win_ratio:.2f}, Draw={draw_chance:.2f}, "
-        f"AwayWin={1 - (final_home_win_ratio + draw_chance):.2f}"
-        )
+        # print(
+        # f"[DEBUG]Result | {home_team.team_name if home_team else home_team_id} "
+        # f"vs {away_team.team_name if away_team else away_team_id} => "
+        # f"HomeWin={final_home_win_ratio:.2f}, Draw={draw_chance:.2f}, "
+        # f"AwayWin={1 - (final_home_win_ratio + draw_chance):.2f}"
+        # )
 
         adjusted_home, adjusted_away, adjusted_draw = self.adjust_ratios_by_status(final_home_win_ratio,(1 - (final_home_win_ratio + draw_chance)),draw_chance,home_status,away_status)
-        print(f"Adj after league stats : ADJ_HOME {adjusted_home}, ADJ_AWAY {adjusted_away}, ADJ_DRW {adjusted_draw}")
+        #print(f"Adj after league stats : ADJ_HOME {adjusted_home}, ADJ_AWAY {adjusted_away}, ADJ_DRW {adjusted_draw}")
         final_adj_home, final_adj_away, final_adj_draw = self.final_95_check(adjusted_home, adjusted_away, adjusted_draw)
-        print(f"Adj after 0.95 : ADJ_HOME {final_adj_home}, ADJ_AWAY {final_adj_away}, ADJ_DRW {final_adj_draw}")
+        #print(f"Adj after 0.95 : ADJ_HOME {final_adj_home}, ADJ_AWAY {final_adj_away}, ADJ_DRW {final_adj_draw}")
 
         return {
             "home_team": home_team_data,
@@ -328,7 +328,7 @@ class OddsCalculationService:
         if not last_performance or last_performance['total_played'] == 0:
             print(f"[WARN] No last season performance for team_id: {team_id}")
 
-        print(f"[DEBUG] {team_name} | Current Season {season_name} Performance => {current_performance}")
+        #print(f"[DEBUG] {team_name} | Current Season {season_name} Performance => {current_performance}")
         if last_performance:
             print(f"[DEBUG] {team_name} | Last Season {last_season_name} Performance => {last_performance}")
 
@@ -357,7 +357,7 @@ class OddsCalculationService:
         team_name = team.team_name if team else team_id
         season_name = season.season_year if season else season_id
 
-        print(f"[DEBUG] get_team_season_performance START | {team_name} ({team_id}), Season: {season_name}")
+        #print(f"[DEBUG] get_team_season_performance START | {team_name} ({team_id}), Season: {season_name}")
 
     
 
@@ -418,7 +418,7 @@ class OddsCalculationService:
         "losses_ratio": float(losses / played) if played else 0
         }
 
-        print(f"[DEBUG] Season Perf | {team_name} ({season_name}) => {result}")
+        #print(f"[DEBUG] Season Perf | {team_name} ({season_name}) => {result}")
         return result
 
 
@@ -426,7 +426,7 @@ class OddsCalculationService:
         """Fetch and calculate the head-to-head record between two teams."""
         home_team = self.db.query(Team).filter(Team.team_id == home_team_id).first()
         away_team = self.db.query(Team).filter(Team.team_id == away_team_id).first()
-        print(f"[DEBUG] H2H START | {home_team.team_name if home_team else home_team_id} vs {away_team.team_name if away_team else away_team_id}")
+        #print(f"[DEBUG] H2H START | {home_team.team_name if home_team else home_team_id} vs {away_team.team_name if away_team else away_team_id}")
 
     
         # Count the total matches where home_team_id is home and away_team_id is away
@@ -468,8 +468,8 @@ class OddsCalculationService:
             MatchStatistics.full_time_result == "D"
         ).scalar()
         
-        print(f"[DEBUG] H2H Last 5 => home_wins={home_wins}, draws={draws}, away_wins={away_wins}, "
-          f"ratios=H:{home_wins / len(total_matches) if len(total_matches) > 0 else 0.0:.2f} D:{draws / len(total_matches) if len(total_matches) > 0 else 0.0:.2f} A:{away_wins / len(total_matches) if len(total_matches) > 0 else 0.0:.2f}")
+        # print(f"[DEBUG] H2H Last 5 => home_wins={home_wins}, draws={draws}, away_wins={away_wins}, "
+        #   f"ratios=H:{home_wins / len(total_matches) if len(total_matches) > 0 else 0.0:.2f} D:{draws / len(total_matches) if len(total_matches) > 0 else 0.0:.2f} A:{away_wins / len(total_matches) if len(total_matches) > 0 else 0.0:.2f}")
         
         return {
             "home_wins": home_wins,
@@ -497,7 +497,7 @@ class OddsCalculationService:
             ((last_performance["wins_ratio"] * last_performance["total_played"])/1.25)
         ) / total_matches_played
 
-        print(f"[DEBUG] Weighted Home Win => {weighted_home_win_ratio:.4f}")
+        #print(f"[DEBUG] Weighted Home Win => {weighted_home_win_ratio:.4f}")
 
         return weighted_home_win_ratio
 
@@ -518,7 +518,7 @@ class OddsCalculationService:
             ((last_performance["losses_ratio"] * last_performance["total_played"])/1.25)
         ) / total_matches_played
        
-        print(f"[DEBUG] Weighted Away Loss => {weighted_away_loss_ratio:.4f}")
+        #print(f"[DEBUG] Weighted Away Loss => {weighted_away_loss_ratio:.4f}")
 
         return weighted_away_loss_ratio
 
@@ -539,7 +539,7 @@ class OddsCalculationService:
             (last_performance["draws_ratio"] * last_performance["total_played"]) 
         ) / total_matches_played
 
-        print(f"[DEBUG] Weighted Draw => {weighted_draw_ratio:.4f}")
+        #print(f"[DEBUG] Weighted Draw => {weighted_draw_ratio:.4f}")
 
         return weighted_draw_ratio
 
