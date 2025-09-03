@@ -6,6 +6,7 @@ from app.new_odds.services.new_odds_service import NewOddsService
 from app.odds_calculation.services.odds_retrieval_service import OddsRetrievalService
 from datetime import datetime
 import requests
+import asyncio
 
 router = APIRouter()
 
@@ -82,11 +83,11 @@ async def calculate_ratios(db: Session = Depends(get_db)):
         if not new_matches:
             return {"message": "No upcoming matches found for ratio calculation."}
 
-        # Perform ratio calculations
-        calculated_ratios_list = await odds_service.calculate_ratios_for_matches(new_matches)
+        # Run the calculation in the background
+        # Schedule async function in the background
+        asyncio.create_task(odds_service.calculate_ratios_for_matches(new_matches))
 
-        # return {"calculated_ratios": calculated_ratios_list}
-        return {"message": "All odds calculations done for upcoming matches  !!!"}
+        return {"message": "Odds calculation task has started in the background."}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
