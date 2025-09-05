@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 async def call_scraper_api():
-    base_url = "https://bet-backend-1.onrender.com"
+    base_url = "https://api.betgenieuk.com"
     headers = {"Content-Type": "application/json"}
 
     async with httpx.AsyncClient() as client:
