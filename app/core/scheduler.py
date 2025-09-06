@@ -48,7 +48,7 @@ def start_scheduler():
     scheduler = BackgroundScheduler()
 
     # 🔁 Job 1: Live game update
-    @scheduler.scheduled_job(IntervalTrigger(minutes=2))
+    @scheduler.scheduled_job(IntervalTrigger(minutes=6))
     def scheduled_live_update():
         logger.info("🔁 Running scheduled check_and_update_live_games()")
         db = SessionLocal()
