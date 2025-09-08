@@ -10,43 +10,54 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-
-async def call_scraper_api():
+def start_scheduler():
+    scheduler = BackgroundScheduler()
     base_url = "https://api.betgenieuk.com"
     headers = {"Content-Type": "application/json"}
 
-    async with httpx.AsyncClient() as client:
-        try:
-            # 🔵 Step 1: Betfair Odds
-            betfair_response = await client.post(
-                f"{base_url}/betfair-odds/betfair-odds/",
-                headers=headers
-            )
-            logger.info(f"📨 Step 1: betfair-odds - {betfair_response.status_code}")
-            await asyncio.sleep(5)
+    # Step 1: Betfair Odds at 4:00 AM
+    @scheduler.scheduled_job(CronTrigger(hour=13, minute=30))
+    def step1_job():
+        logger.info("🔁 Running Step 1: Betfair Odds")
+        async def task():
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(f"{base_url}/betfair-odds/betfair-odds/", headers=headers)
+                logger.info(f"📨 Step 1: betfair-odds - {resp.status_code}")
+        asyncio.run(task())
 
-            # Step 2: League table scraper
-            league_response = await client.post(
-                f"{base_url}/current-league/scrape-current-league/",
-                json={"scraper_name": "thefishy"},
-                headers=headers
-            )
-            logger.info(f"📨 Step 2: scrape-current-league - {league_response.status_code}")
-            await asyncio.sleep(5)
+    # Step 2: League table scraper at 4:15 AM
+    @scheduler.scheduled_job(CronTrigger(hour=13, minute=45))
+    def step2_job():
+        logger.info("🔁 Running Step 2: League table scraper")
+        async def task():
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    f"{base_url}/current-league/scrape-current-league/",
+                    json={"scraper_name": "thefishy"},
+                    headers=headers
+                )
+                logger.info(f"📨 Step 2: scrape-current-league - {resp.status_code}")
+        asyncio.run(task())
 
-            # Step 3: Odds calculation
-            calc_response = await client.post(
-                f"{base_url}/odds-calculation/calculate-ratios/",
-                headers=headers
-            )
-            logger.info(f"📨 Step 3: calculate-ratios - {calc_response.status_code}")
+    # Step 3: Odds calculation at 4:30 AM
+    @scheduler.scheduled_job(CronTrigger(hour=14, minute=00))
+    def step3_job():
+        logger.info("🔁 Running Step 3: Odds calculation")
+        async def task():
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(f"{base_url}/odds-calculation/calculate-ratios/", headers=headers)
+                logger.info(f"📨 Step 3: calculate-ratios - {resp.status_code}")
+        asyncio.run(task())
 
-        except Exception as e:
-            logger.error("❌ Error in scheduled scraping chain", exc_info=True)
 
+     # 🔁 Job 3: Test print job every 5 minutes (for testing scheduler)
+    @scheduler.scheduled_job(IntervalTrigger(minutes=6))
+    def scheduled_test_print():
+        logger.info("-------------------------")
+        logger.info("!!!! This is testing and printing scheduler !!!!")
+        logger.info("-------------------------")
+        
 
-def start_scheduler():
-    scheduler = BackgroundScheduler()
 
     # 🔁 Job 1: Live game update
     @scheduler.scheduled_job(IntervalTrigger(minutes=6))
@@ -60,24 +71,6 @@ def start_scheduler():
             logger.error(f"❌ Error in live update scheduler: {e}")
         finally:
             db.close()
-
-   # 🔁 Job 2: Scraper job (runs Tue & Thu at 1:00 PM)
-    @scheduler.scheduled_job(CronTrigger(hour=13, minute=10))
-    def scheduled_scraper_call():
-        logger.info("🔁 Running scheduled scraper API calls (everyday at 4AM)")
-        try:
-            asyncio.run(call_scraper_api())
-        except Exception as e:
-            logger.error(f"❌ Error running scheduled scraper call: {e}", exc_info=True)
-
     
-     # 🔁 Job 3: Test print job every 5 minutes (for testing scheduler)
-    @scheduler.scheduled_job(IntervalTrigger(minutes=5))
-    def scheduled_test_print():
-        logger.info("-------------------------")
-        logger.info("!!!! This is testing and printing scheduler !!!!")
-        logger.info("-------------------------")
-        
-
     scheduler.start()
     logger.info("✅ Scheduler started with live update + scraper jobs")
