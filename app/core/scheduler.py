@@ -16,7 +16,7 @@ def start_scheduler():
     headers = {"Content-Type": "application/json"}
 
     # Step 1: Betfair Odds at 4:00 AM
-    @scheduler.scheduled_job(CronTrigger(hour=13, minute=30))
+    @scheduler.scheduled_job(CronTrigger(hour=4, minute=0))
     def step1_job():
         logger.info("🔁 Running Step 1: Betfair Odds")
         async def task():
@@ -26,7 +26,7 @@ def start_scheduler():
         asyncio.run(task())
 
     # Step 2: League table scraper at 4:15 AM
-    @scheduler.scheduled_job(CronTrigger(hour=13, minute=45))
+    @scheduler.scheduled_job(CronTrigger(hour=4, minute=15))
     def step2_job():
         logger.info("🔁 Running Step 2: League table scraper")
         async def task():
@@ -40,7 +40,7 @@ def start_scheduler():
         asyncio.run(task())
 
     # Step 3: Odds calculation at 4:30 AM
-    @scheduler.scheduled_job(CronTrigger(hour=14, minute=00))
+    @scheduler.scheduled_job(CronTrigger(hour=4, minute=30))
     def step3_job():
         logger.info("🔁 Running Step 3: Odds calculation")
         async def task():
