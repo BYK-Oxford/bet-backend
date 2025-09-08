@@ -14,7 +14,8 @@ async def get_new_betfair_odds(db: Session = Depends(get_db)):
     
     betfair_service = BetfairService(db)
     
-    # Run get_betfair_odds() in a separate thread (non-blocking)
-    await asyncio.to_thread(betfair_service.display_filtered_competitions_and_markets)
-
+    # Run in background, don't await (returns immediately)
+    asyncio.create_task(asyncio.to_thread(
+        betfair_service.display_filtered_competitions_and_markets
+    ))
     return {"message": "Triggered fetching Betfair odds"}
