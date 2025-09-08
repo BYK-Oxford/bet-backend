@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import traceback
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -41,7 +42,7 @@ async def call_scraper_api():
             logger.info(f"📨 Step 3: calculate-ratios - {calc_response.status_code}")
 
         except Exception as e:
-            logger.error(f"❌ Error in scheduled scraping chain: {e}")
+            logger.error("❌ Error in scheduled scraping chain", exc_info=True)
 
 
 def start_scheduler():
@@ -61,13 +62,13 @@ def start_scheduler():
             db.close()
 
    # 🔁 Job 2: Scraper job (runs Tue & Thu at 1:00 PM)
-    @scheduler.scheduled_job(CronTrigger(hour=4, minute=0))
+    @scheduler.scheduled_job(CronTrigger(hour=13, minute=30))
     def scheduled_scraper_call():
         logger.info("🔁 Running scheduled scraper API calls (everyday at 4AM)")
         try:
             asyncio.run(call_scraper_api())
         except Exception as e:
-            logger.error(f"❌ Error running scheduled scraper call: {e}")
+            logger.error(f"❌ Error running scheduled scraper call: {e}", exc_info=True)
 
     
      # 🔁 Job 3: Test print job every 5 minutes (for testing scheduler)
