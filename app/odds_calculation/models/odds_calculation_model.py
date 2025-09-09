@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, ForeignKey, DateTime, Float, Time
+from sqlalchemy import Column, String, ForeignKey, DateTime, Float, Time, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -15,6 +15,8 @@ class OddsCalculation(Base):
     calculated_home_odds = Column(Float)
     calculated_draw_odds = Column(Float)
     calculated_away_odds = Column(Float)
+
+    stats_banded_data = Column(JSON, nullable=True)
     
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_calculated_odds")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_calculated_odds")

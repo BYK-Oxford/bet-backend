@@ -165,3 +165,53 @@ class MatchStatisticsService:
             historic_matches.pop()
             
         return historic_matches
+
+    def get_historic_stats_for_banded_chart(self, home_team_id: str, away_team_id: str):
+        """
+        Fetch all historic match statistics for banded chart calculations.
+        Returns only the stats needed for SD calculations:
+        - shots_on_target, total shots, corners, full_time_goals
+        """
+        # Query past matches between the two teams
+        results = (
+            self.db.query(
+                Match.match_id,
+                Match.date,
+                MatchStatistics.full_time_home_goals,
+                MatchStatistics.full_time_away_goals,
+                MatchStatistics.shots_home,
+                MatchStatistics.shots_away,
+                MatchStatistics.shots_on_target_home,
+                MatchStatistics.shots_on_target_away,
+                MatchStatistics.corners_home,
+                MatchStatistics.corners_away,
+            )
+            .join(MatchStatistics, Match.match_id == MatchStatistics.match_id)
+            .filter(Match.home_team_id == home_team_id)
+            .filter(Match.away_team_id == away_team_id)
+            .order_by(Match.date.desc())
+            .all()
+        )
+
+        if not results:
+            return []
+
+        # Format the results
+        historic_stats = []
+        for row in results:
+            match_stats = {
+                "match_id": row.match_id,
+                "date": row.date,
+                "full_time_home_goals": row.full_time_home_goals,
+                "full_time_away_goals": row.full_time_away_goals,
+                "shots_home": row.shots_home,
+                "shots_away": row.shots_away,
+                "shots_on_target_home": row.shots_on_target_home,
+                "shots_on_target_away": row.shots_on_target_away,
+                "corners_home": row.corners_home,
+                "corners_away": row.corners_away,
+            }
+            historic_stats.append(match_stats)
+
+        return historic_stats
+

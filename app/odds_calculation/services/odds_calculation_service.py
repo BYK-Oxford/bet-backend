@@ -7,11 +7,15 @@ from app.standings.models.standings_model import Standing
 from app.current_league.models.current_league_model import CurrentLeague
 from app.teams.models.team_model import Team
 from app.odds_calculation.services.odds_saving_service import OddsSavingService
+from app.match_statistics.services.match_statistics_service import MatchStatisticsService
 from app.leagues.models.leagues_models import League
+from datetime import datetime, timedelta
 import re
 import os
 import pandas as pd
 import json
+import statistics
+import numpy as np
 
 class OddsCalculationService:
     LAST_SEASON_ID = None
@@ -36,6 +40,7 @@ class OddsCalculationService:
     def __init__(self, db: Session):
         self.db = db
         self.odds_saving_service = OddsSavingService(db)
+        self.match_statistics_service = MatchStatisticsService(db)
         # Load aliases once
         if not self.__class__.TEAM_ALIASES:  # only if empty
             try:
@@ -53,6 +58,7 @@ class OddsCalculationService:
             print(f"[LOG] Processing match_id: {match.new_odds_id}, Home: {match.home_team_id}, Away: {match.away_team_id}, Date: {match.date}")
             self.__class__.CURRENT_LEAGUE_ID = match.league_id
             odds_data = await self.calculate_ratios(match.home_team_id, match.away_team_id, match.season_id)
+            banded_data = odds_data.get("stats_banded_data") 
             if not odds_data:
                     print(f"[WARN] No odds returned for match_id: {match.new_odds_id}")
                     continue
@@ -62,7 +68,8 @@ class OddsCalculationService:
                     time=match.time,
                     home_team_id=match.home_team_id,
                     away_team_id=match.away_team_id,
-                    odds_data=odds_data
+                    odds_data=odds_data,
+                    stats_metrics=banded_data
                 )
                 print(f"[LOG] Odds saved for match_id: {match.new_odds_id}")
                 results.append(saved_entry)
@@ -163,6 +170,26 @@ class OddsCalculationService:
         final_adj_home, final_adj_away, final_adj_draw = self.final_95_check(adjusted_home, adjusted_away, adjusted_draw)
         #print(f"Adj after 0.95 : ADJ_HOME {final_adj_home}, ADJ_AWAY {final_adj_away}, ADJ_DRW {final_adj_draw}")
 
+        # Fetch historic stats for this matchup
+        historic_matches_raw = self.match_statistics_service.get_historic_stats_for_banded_chart(
+            home_team_id, away_team_id
+        )
+
+        # Reformat to match calculate_historic_metrics expectations
+        historic_matches = []
+        for match in historic_matches_raw:
+            historic_matches.append({
+                "statistics": {
+                    "shots_on_target_home": match["shots_on_target_home"],
+                    "shots_on_target_away": match["shots_on_target_away"],
+                    "corners_home": match["corners_home"],
+                    "corners_away": match["corners_away"]
+                }
+            })
+
+        # Now calculate banded metrics
+        banded_data = self.calculate_historic_metrics(historic_matches)
+
         return {
             "home_team": home_team_data,
             "away_team": away_team_data,
@@ -172,6 +199,7 @@ class OddsCalculationService:
             "weighted away draw": weighted_draw_away,
             "final_home_win_ratio": round(final_adj_home,3),
             "final_away_win_ratio": round(final_adj_away,3),
+            "stats_banded_data": banded_data
         }  
     
     def final_95_check(
@@ -614,3 +642,120 @@ class OddsCalculationService:
             return "promoted"
 
         return "unknown"
+    
+    def compute_banded_stats(self, avg: float) -> list:
+        """Distribute avg across 90 minutes and add ±25% range (same as frontend)."""
+        time_intervals = [0, 15, 30, 45, 60, 75, 90]
+        per_min = avg / 90
+        banded = []
+        for t in time_intervals:
+            val = round(per_min * t, 2)
+            if t == 0:
+                banded.append({
+                    "time": t,
+                    "actual": val,
+                    "stdRange": [0, 0]   # same as frontend behavior
+                })
+            else:
+                std = val * 0.25   # ✅ proportional to value
+                banded.append({
+                    "time": t,
+                    "actual": val,
+                    "stdRange": [round(val - std, 2), round(val + std, 2)]
+                })
+        return banded
+
+
+    def compute_correlation(self, matches, stat_key: str):
+        """
+        Compute correlation separately:
+        - home stat ↔ home goals
+        - away stat ↔ away goals
+        """
+        import numpy as np
+
+        home_stats, home_goals = [], []
+        away_stats, away_goals = [], []
+
+        for m in matches:
+            if stat_key == "corners":
+                home_stats.append(m["statistics"]["corners_home"])
+                away_stats.append(m["statistics"]["corners_away"])
+            elif stat_key == "shots_on_target":
+                home_stats.append(m["statistics"]["shots_on_target_home"])
+                away_stats.append(m["statistics"]["shots_on_target_away"])
+            elif stat_key == "shots_accuracy":
+                # avoid division by zero
+                shots_home = m["statistics"]["shots_home"]
+                shots_away = m["statistics"]["shots_away"]
+                home_stats.append(m["statistics"]["shots_on_target_home"] / shots_home if shots_home else 0)
+                away_stats.append(m["statistics"]["shots_on_target_away"] / shots_away if shots_away else 0)
+
+            # corresponding goals
+            home_goals.append(m["statistics"]["full_time_home_goals"])
+            away_goals.append(m["statistics"]["full_time_away_goals"])
+
+        def safe_corr(x, y):
+            if len(x) < 2 or len(y) < 2:
+                return 0
+            return float(np.corrcoef(x, y)[0, 1])
+
+        return {
+            "home_correlation": safe_corr(home_stats, home_goals),
+            "away_correlation": safe_corr(away_stats, away_goals),
+        }
+
+
+    def calculate_historic_metrics(self, historic_matches):
+        if not historic_matches:
+            return {}
+
+        today = datetime.now()
+        # 1️⃣ Filter for SD (last 5 years)
+        cutoff_sd = today - timedelta(days=5*365)
+        matches_for_sd = [
+            m for m in historic_matches
+            if datetime.strptime(str(m["date"]), "%Y-%m-%d") >= cutoff_sd
+        ]
+
+        # 2️⃣ Filter for correlation (last 3 years)
+        cutoff_corr = today - timedelta(days=3*365)
+        matches_for_corr = [
+            m for m in historic_matches
+            if datetime.strptime(str(m["date"]), "%Y-%m-%d") >= cutoff_corr
+        ]
+
+        stats_keys = ["corners", "shots_on_target", "shots_accuracy"]
+        banded_data = {}
+
+        for key in stats_keys:
+            home_vals, away_vals = [], []
+
+            if key != "shots_accuracy":
+                home_vals = [m["statistics"][f"{key}_home"] for m in matches_for_sd]
+                away_vals = [m["statistics"][f"{key}_away"] for m in matches_for_sd]
+            else:
+                for m in matches_for_sd:
+                    shots_home = m["statistics"]["shots_home"]
+                    shots_away = m["statistics"]["shots_away"]
+                    home_vals.append(m["statistics"]["shots_on_target_home"] / shots_home if shots_home else 0)
+                    away_vals.append(m["statistics"]["shots_on_target_away"] / shots_away if shots_away else 0)
+
+            if not home_vals or not away_vals:
+                continue
+
+            avg_home = statistics.mean(home_vals)
+            avg_away = statistics.mean(away_vals)
+            sd_home = statistics.stdev(home_vals) if len(home_vals) > 1 else 0
+            sd_away = statistics.stdev(away_vals) if len(away_vals) > 1 else 0
+
+            correlations = self.compute_correlation(matches_for_corr, key)
+
+            banded_data[key] = {
+                "home": self.compute_banded_stats(avg_home, sd_home),
+                "away": self.compute_banded_stats(avg_away, sd_away),
+                "home_correlation": correlations["home_correlation"],
+                "away_correlation": correlations["away_correlation"],
+            }
+
+        return banded_data
