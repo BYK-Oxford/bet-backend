@@ -16,6 +16,7 @@ import pandas as pd
 import json
 import statistics
 import numpy as np
+import math
 
 class OddsCalculationService:
     LAST_SEASON_ID = None
@@ -179,11 +180,16 @@ class OddsCalculationService:
         historic_matches = []
         for match in historic_matches_raw:
             historic_matches.append({
+                "date": match["date"],
                 "statistics": {
+                    "shots_home": match.get("shots_home", 0),
+                    "shots_away": match.get("shots_away", 0),
                     "shots_on_target_home": match["shots_on_target_home"],
                     "shots_on_target_away": match["shots_on_target_away"],
                     "corners_home": match["corners_home"],
-                    "corners_away": match["corners_away"]
+                    "corners_away": match["corners_away"],
+                    "full_time_home_goals": match.get("full_time_home_goals", 0),
+                    "full_time_away_goals": match.get("full_time_away_goals", 0)
                 }
             })
 
@@ -646,59 +652,53 @@ class OddsCalculationService:
     def compute_banded_stats(self, avg: float) -> list:
         """Distribute avg across 90 minutes and add ±25% range (same as frontend)."""
         time_intervals = [0, 15, 30, 45, 60, 75, 90]
-        per_min = avg / 90
+        per_min = avg / 90 if avg else 0
         banded = []
         for t in time_intervals:
             val = round(per_min * t, 2)
             if t == 0:
-                banded.append({
-                    "time": t,
-                    "actual": val,
-                    "stdRange": [0, 0]   # same as frontend behavior
-                })
+                banded.append({"time": t, "actual": val, "stdRange": [0, 0]})
             else:
-                std = val * 0.25   # ✅ proportional to value
+                std = val * 0.25
                 banded.append({
                     "time": t,
                     "actual": val,
-                    "stdRange": [round(val - std, 2), round(val + std, 2)]
+                    "stdRange": [round(max(val - std, 0), 2), round(val + std, 2)]
                 })
         return banded
 
 
     def compute_correlation(self, matches, stat_key: str):
-        """
-        Compute correlation separately:
-        - home stat ↔ home goals
-        - away stat ↔ away goals
-        """
-        import numpy as np
-
         home_stats, home_goals = [], []
         away_stats, away_goals = [], []
 
         for m in matches:
-            if stat_key == "corners":
-                home_stats.append(m["statistics"]["corners_home"])
-                away_stats.append(m["statistics"]["corners_away"])
-            elif stat_key == "shots_on_target":
-                home_stats.append(m["statistics"]["shots_on_target_home"])
-                away_stats.append(m["statistics"]["shots_on_target_away"])
-            elif stat_key == "shots_accuracy":
-                # avoid division by zero
-                shots_home = m["statistics"]["shots_home"]
-                shots_away = m["statistics"]["shots_away"]
-                home_stats.append(m["statistics"]["shots_on_target_home"] / shots_home if shots_home else 0)
-                away_stats.append(m["statistics"]["shots_on_target_away"] / shots_away if shots_away else 0)
+            stats = m["statistics"]
 
-            # corresponding goals
-            home_goals.append(m["statistics"]["full_time_home_goals"])
-            away_goals.append(m["statistics"]["full_time_away_goals"])
+            if stat_key == "corners":
+                home_val = stats.get("corners_home", 0)
+                away_val = stats.get("corners_away", 0)
+
+            elif stat_key == "shots_on_target":
+                home_val = stats.get("shots_on_target_home", 0)
+                away_val = stats.get("shots_on_target_away", 0)
+
+            else:
+                continue
+
+            # Only append if values exist
+            if home_val is not None:
+                home_stats.append(home_val)
+                home_goals.append(stats.get("full_time_home_goals", 0))
+            if away_val is not None:
+                away_stats.append(away_val)
+                away_goals.append(stats.get("full_time_away_goals", 0))
 
         def safe_corr(x, y):
-            if len(x) < 2 or len(y) < 2:
+            if len(x) < 2 or len(y) < 2 or np.std(x) == 0 or np.std(y) == 0:
                 return 0
-            return float(np.corrcoef(x, y)[0, 1])
+            corr = float(np.corrcoef(x, y)[0, 1])
+            return 0 if math.isnan(corr) or math.isinf(corr) else corr
 
         return {
             "home_correlation": safe_corr(home_stats, home_goals),
@@ -707,55 +707,77 @@ class OddsCalculationService:
 
 
     def calculate_historic_metrics(self, historic_matches):
+        import math
+        import statistics
+        import numpy as np
+
+        # ✅ Only keep corners & shots_on_target
+        stats_keys = ["corners", "shots_on_target"]
+
         if not historic_matches:
-            return {}
+            return {
+                key: {
+                    "home": self.compute_banded_stats(0),
+                    "away": self.compute_banded_stats(0),
+                    "home_correlation": 0,
+                    "away_correlation": 0
+                } for key in stats_keys
+            }
 
         today = datetime.now()
-        # 1️⃣ Filter for SD (last 5 years)
+        # Cutoffs
         cutoff_sd = today - timedelta(days=5*365)
+        cutoff_corr = today - timedelta(days=3*365)
+
+        def get_match_date(m):
+            """Extract just the date from a datetime or string."""
+            match_date = m.get("date")
+            if isinstance(match_date, datetime):
+                return match_date.date()
+            elif match_date:
+                return datetime.strptime(str(match_date).split(" ")[0], "%Y-%m-%d").date()
+            return None
+
+        # Filter for SD (last 5 years)
         matches_for_sd = [
             m for m in historic_matches
-            if datetime.strptime(str(m["date"]), "%Y-%m-%d") >= cutoff_sd
+            if (d := get_match_date(m)) and d >= cutoff_sd.date()
         ]
 
-        # 2️⃣ Filter for correlation (last 3 years)
-        cutoff_corr = today - timedelta(days=3*365)
+        # Filter for correlation (last 3 years, but cap at 3 latest matches)
         matches_for_corr = [
             m for m in historic_matches
-            if datetime.strptime(str(m["date"]), "%Y-%m-%d") >= cutoff_corr
+            if (d := get_match_date(m)) and d >= cutoff_corr.date()
         ]
+        matches_for_corr = sorted(matches_for_corr, key=lambda m: get_match_date(m), reverse=True)[:3]
 
-        stats_keys = ["corners", "shots_on_target", "shots_accuracy"]
         banded_data = {}
 
         for key in stats_keys:
             home_vals, away_vals = [], []
 
-            if key != "shots_accuracy":
-                home_vals = [m["statistics"][f"{key}_home"] for m in matches_for_sd]
-                away_vals = [m["statistics"][f"{key}_away"] for m in matches_for_sd]
-            else:
-                for m in matches_for_sd:
-                    shots_home = m["statistics"]["shots_home"]
-                    shots_away = m["statistics"]["shots_away"]
-                    home_vals.append(m["statistics"]["shots_on_target_home"] / shots_home if shots_home else 0)
-                    away_vals.append(m["statistics"]["shots_on_target_away"] / shots_away if shots_away else 0)
+            for m in matches_for_sd:
+                stats = m.get("statistics", {})
+                home_val = stats.get(f"{key}_home", 0)
+                away_val = stats.get(f"{key}_away", 0)
 
-            if not home_vals or not away_vals:
-                continue
+                home_vals.append(home_val if home_val is not None else 0)
+                away_vals.append(away_val if away_val is not None else 0)
 
-            avg_home = statistics.mean(home_vals)
-            avg_away = statistics.mean(away_vals)
-            sd_home = statistics.stdev(home_vals) if len(home_vals) > 1 else 0
-            sd_away = statistics.stdev(away_vals) if len(away_vals) > 1 else 0
+            avg_home = statistics.mean(home_vals) if home_vals else 0
+            avg_away = statistics.mean(away_vals) if away_vals else 0
 
             correlations = self.compute_correlation(matches_for_corr, key)
+            home_corr = correlations.get("home_correlation", 0)
+            away_corr = correlations.get("away_correlation", 0)
+            home_corr = 0 if math.isnan(home_corr) or math.isinf(home_corr) else home_corr
+            away_corr = 0 if math.isnan(away_corr) or math.isinf(away_corr) else away_corr
 
             banded_data[key] = {
-                "home": self.compute_banded_stats(avg_home, sd_home),
-                "away": self.compute_banded_stats(avg_away, sd_away),
-                "home_correlation": correlations["home_correlation"],
-                "away_correlation": correlations["away_correlation"],
+                "home": self.compute_banded_stats(avg_home),
+                "away": self.compute_banded_stats(avg_away),
+                "home_correlation": home_corr,
+                "away_correlation": away_corr,
             }
 
         return banded_data
