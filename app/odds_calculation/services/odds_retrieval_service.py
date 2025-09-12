@@ -72,6 +72,8 @@ class OddsRetrievalService:
                 "home_odds": original.home_odds if original else None,
                 "draw_odds": original.draw_odds if original else None,
                 "away_odds": original.away_odds if original else None,
+                "stats_banded_data": o.stats_banded_data if o.stats_banded_data else None,
+
             }
 
             if include_market_data:
