@@ -86,64 +86,66 @@ class SofaScoreService:
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
-            context = browser.new_context()
-            page = context.new_page()
-
-            # Get live events
-            page.goto(self.LIVE_API_URL)
             try:
-                data = json.loads(page.inner_text("pre"))
-            except json.JSONDecodeError:
-                browser.close()
-                raise ValueError("Failed to parse JSON from live events.")
+                context = browser.new_context()
+                page = context.new_page()
 
-            if "events" not in data:
-                browser.close()
-                raise ValueError("No 'events' found in live data.")
-
-            # Loop through events
-            for event in data["events"]:
-                league_name = event.get("tournament", {}).get("name")
-                if league_name not in self.SELECTED_LEAGUES:
-                    continue
-
-                match_data = {
-                    "startTimestamp": event.get("startTimestamp"),
-                    "status.timestamp": event.get("statusTime", {}).get("timestamp"),
-                    "id": event.get("id"),
-                    "currentMinute": self._game_clock(
-                        event.get("time", {}).get("currentPeriodStartTimestamp"),
-                        event.get("status", {}).get("description")
-                    ),
-                    "changeTimestamp": event.get("changes", {}).get("changeTimestamp"),
-                    "currentPeriodStartTimestamp": event.get("time", {}).get("currentPeriodStartTimestamp"),
-                    "homeScore.current": event.get("homeScore", {}).get("current"),
-                    "homeScore.period1": event.get("homeScore", {}).get("period1"),
-                    "homeScore.period2": event.get("homeScore", {}).get("period2"),
-                    "awayScore.current": event.get("awayScore", {}).get("current"),
-                    "awayScore.period1": event.get("awayScore", {}).get("period1"),
-                    "awayScore.period2": event.get("awayScore", {}).get("period2"),
-                    "homeTeam.name": event.get("homeTeam", {}).get("name"),
-                    "awayTeam.name": event.get("awayTeam", {}).get("name"),
-                    "lastPeriod": event.get("lastPeriod"),
-                    "finalResultOnly": event.get("finalResultOnly"),
-                    "status.description": event.get("status", {}).get("description"),
-                    "status.type": event.get("status", {}).get("type"),
-                    "customId": event.get("customId"),
-                    "slug": event.get("slug")
-                }
-
-                # Fetch match statistics
-                stats_url = self.STATS_API_URL.format(id=event.get("id"))
-                page.goto(stats_url)
+                # Get live events
+                page.goto(self.LIVE_API_URL)
                 try:
-                    stats_content = json.loads(page.inner_text("pre"))
-                    match_data.update(self._extract_required_stats(stats_content))
-                except Exception as e:
-                    match_data["statsError"] = f"Could not fetch stats: {e}"
+                    data = json.loads(page.inner_text("pre"))
+                except json.JSONDecodeError:
+                    browser.close()
+                    raise ValueError("Failed to parse JSON from live events.")
 
-                results.append(match_data)
+                if "events" not in data:
+                    browser.close()
+                    raise ValueError("No 'events' found in live data.")
 
-            browser.close()
+                # Loop through events
+                for event in data["events"]:
+                    league_name = event.get("tournament", {}).get("name")
+                    if league_name not in self.SELECTED_LEAGUES:
+                        continue
+
+                    match_data = {
+                        "startTimestamp": event.get("startTimestamp"),
+                        "status.timestamp": event.get("statusTime", {}).get("timestamp"),
+                        "id": event.get("id"),
+                        "currentMinute": self._game_clock(
+                            event.get("time", {}).get("currentPeriodStartTimestamp"),
+                            event.get("status", {}).get("description")
+                        ),
+                        "changeTimestamp": event.get("changes", {}).get("changeTimestamp"),
+                        "currentPeriodStartTimestamp": event.get("time", {}).get("currentPeriodStartTimestamp"),
+                        "homeScore.current": event.get("homeScore", {}).get("current"),
+                        "homeScore.period1": event.get("homeScore", {}).get("period1"),
+                        "homeScore.period2": event.get("homeScore", {}).get("period2"),
+                        "awayScore.current": event.get("awayScore", {}).get("current"),
+                        "awayScore.period1": event.get("awayScore", {}).get("period1"),
+                        "awayScore.period2": event.get("awayScore", {}).get("period2"),
+                        "homeTeam.name": event.get("homeTeam", {}).get("name"),
+                        "awayTeam.name": event.get("awayTeam", {}).get("name"),
+                        "lastPeriod": event.get("lastPeriod"),
+                        "finalResultOnly": event.get("finalResultOnly"),
+                        "status.description": event.get("status", {}).get("description"),
+                        "status.type": event.get("status", {}).get("type"),
+                        "customId": event.get("customId"),
+                        "slug": event.get("slug")
+                    }
+
+                    # Fetch match statistics
+                    stats_url = self.STATS_API_URL.format(id=event.get("id"))
+                    page.goto(stats_url)
+                    try:
+                        stats_content = json.loads(page.inner_text("pre"))
+                        match_data.update(self._extract_required_stats(stats_content))
+                    except Exception as e:
+                        match_data["statsError"] = f"Could not fetch stats: {e}"
+
+                    results.append(match_data)
+
+            finally:
+                browser.close()
 
         return results
