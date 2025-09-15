@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class OddsCalculation(Base):
+    # new
     __tablename__ = "odds_calculations"
 
     odds_calculation_id = Column(String, primary_key=True, index=True)
