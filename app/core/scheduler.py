@@ -76,21 +76,49 @@ def start_scheduler():
     def step1_job():
         logger.info("🔁 Running Step 1: Betfair Odds")
         p = Process(target=fetch_betfair_odds)
-        p.start()
+        try:
+            p.start()
+            p.join()
+        except Exception as e:
+            logger.error(f"❌ Error in step1job betfair odds getting process: {e}")
+        finally:
+            if p.is_alive():
+                p.terminate()
+                p.join()  
+                logger.warning("⚠  betfair odds Process terminated forcefully")
 
     # Step 2: League table scraper at 4:15 AM
     @scheduler.scheduled_job(CronTrigger(hour=4, minute=15))
     def step2_job():
         logger.info("🔁 Running Step 2: League table scraper")
         p = Process(target=fetch_league_scraper)
-        p.start()
+        try:
+            p.start()
+            p.join()
+        except Exception as e:
+            logger.error(f"❌ Error in step2_job fishy table process: {e}")
+        finally:
+            if p.is_alive():
+                p.terminate()
+                p.join()  
+                logger.warning("⚠ fishy table Process terminated forcefully")
 
     # Step 3: Odds calculation at 4:30 AM
     @scheduler.scheduled_job(CronTrigger(hour=4, minute=30))
     def step3_job():
         logger.info("🔁 Running Step 3: Odds calculation")
         p = Process(target=calculate_odds)
-        p.start()
+        try:
+            p.start()
+            p.join()
+        except Exception as e:
+            logger.error(f"❌ Error in step3_job calculate  process: {e}")
+        finally:
+            if p.is_alive():
+                p.terminate()
+                p.join()  
+                logger.warning("⚠ step3_job calculate Process terminated forcefully")
+
 
     # Test print job every 6 minutes
     @scheduler.scheduled_job(IntervalTrigger(minutes=6))
@@ -104,7 +132,16 @@ def start_scheduler():
     def scheduled_live_update():
         logger.info("🔁 Running scheduled check_and_update_live_games()")
         p = Process(target=live_game_update)
-        p.start()
+        try:
+            p.start()
+            p.join()  # wait for process to finish
+        except Exception as e:
+            logger.error(f"❌ Error in scheduled_live_update process: {e}")
+        finally:
+            if p.is_alive():
+                p.terminate()
+                p.join()
+                logger.warning("⚠ live_game_update Process terminated forcefully")
 
     scheduler.start()
     logger.info("✅ Scheduler started with live update + scraper jobs")
