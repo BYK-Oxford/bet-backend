@@ -53,10 +53,14 @@ class MatchStatisticsService:
             red_cards_away=statistics_data.get("red_cards_away", 0),
         )
 
-        self.db.add(match_stats)
-        self.db.commit()
-        self.db.refresh(match_stats)
-        return match_stats
+        try:
+            self.db.add(match_stats)
+            self.db.commit()
+            self.db.refresh(match_stats)
+            return match_stats
+        except Exception:
+            self.db.rollback()  # 🔥 rollback to keep session clean
+            raise
 
 
     def get_historic_matches_between_teams(self, odds_calculation_id: str):

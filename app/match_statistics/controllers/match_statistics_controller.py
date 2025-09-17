@@ -20,7 +20,8 @@ def get_all_match_statistics(db: Session = Depends(get_db)):
 
         return {"match_statistics": statistics}
 
-    except Exception as e:
+    except Exception as e:#
+        db.rollback() 
         raise HTTPException(status_code=500, detail=str(e))
     
     
@@ -39,4 +40,5 @@ def get_historic_matches_by_odds_calculation(id: str, db: Session = Depends(get_
         return matches
 
     except Exception as e:
+        db.rollback() 
         raise HTTPException(status_code=500, detail=str(e))
