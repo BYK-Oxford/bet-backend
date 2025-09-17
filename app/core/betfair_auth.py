@@ -27,13 +27,13 @@ class BetfairAuthService:
         }
 
         try:
-            response = requests.post(self.login_url, data=payload, cert=cert, headers=headers)
-            json_response = response.json()
+            with requests.post(self.login_url, data=payload, cert=cert, headers=headers) as response:
+                json_response = response.json()
 
-            if json_response.get('loginStatus') == 'SUCCESS':
-                return json_response['sessionToken']
-            else:
-                raise Exception(f"Login failed: {json_response.get('error')}")
+                if json_response.get('loginStatus') == 'SUCCESS':
+                    return json_response['sessionToken']
+                else:
+                    raise Exception(f"Login failed: {json_response.get('error')}")
         except Exception as e:
             print(f"Login error: {e}")
             return None
