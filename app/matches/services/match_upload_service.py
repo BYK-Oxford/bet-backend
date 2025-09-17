@@ -1,7 +1,7 @@
 import pandas as pd
 from io import StringIO
 from sqlalchemy.orm import Session
-from fastapi import UploadFile, Depends
+from fastapi import UploadFile
 from app.core.database import get_db
 from app.matches.services.match_service import MatchService
 from app.betting_odds.services.betting_odds_service import BettingOddsService
@@ -11,7 +11,7 @@ from app.match_statistics.services.match_statistics_service import MatchStatisti
 class UploadService:
 
     def __init__(self, db: Session):
-        self.db = Depends(get_db)
+        self.db = db
         self.match_service = MatchService(db)
         self.betting_odds_service = BettingOddsService(db)
         self.match_statistics_service = MatchStatisticsService(db)

@@ -12,5 +12,9 @@ async def upload_csv(
     db: Session = Depends(get_db)  # Session managed by FastAPIY
 ):
     """Upload CSV and delegate processing to the service layer."""
-    upload_service = UploadService(db)  # Dependency injection
-    return await upload_service.process_csv(file)
+    try:
+        upload_service = UploadService(db)  # Dependency injection
+        return await upload_service.process_csv(file)
+    except Exception as e:
+        db.rollback()  # rollback on failure to avoid locked sessions
+        raise e

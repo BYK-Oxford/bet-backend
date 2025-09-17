@@ -51,9 +51,12 @@ class MatchService:
             referee_id=referee.ref_id
         )
 
-        self.db.add(match)
-        self.db.commit()
-        self.db.refresh(match)
-
+        try:
+            self.db.add(match)
+            self.db.commit()
+            self.db.refresh(match)
+        except Exception as e:
+            self.db.rollback()   # 🔥 important to avoid broken sessions
+            raise e
      
         return match
