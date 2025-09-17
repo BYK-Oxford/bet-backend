@@ -31,20 +31,24 @@ class CountryService:
         if not country_name:
             raise ValueError(f"Unknown division code: {division}")
 
-        # Check if country already exists in the database
-        country = self.db.query(Country).filter(Country.country_name == country_name).first()
+        try:
+            # Check if country already exists in the database
+            country = self.db.query(Country).filter(Country.country_name == country_name).first()
 
-        if not country:
-            # Generate a structured ID like C1, C2, C10000
-            new_id = generate_custom_id(self.db, Country, "C", "country_id")
+            if not country:
+                # Generate a structured ID like C1, C2, C10000
+                new_id = generate_custom_id(self.db, Country, "C", "country_id")
 
-            # If the country doesn't exist, create and save it
-            country = Country(
-                country_id=new_id,  # Generate unique country ID
-                country_name=country_name      # Save the corresponding country name
-            )
-            self.db.add(country)
-            self.db.commit()
-            self.db.refresh(country)
+                # If the country doesn't exist, create and save it
+                country = Country(
+                    country_id=new_id,  # Generate unique country ID
+                    country_name=country_name      # Save the corresponding country name
+                )
+                self.db.add(country)
+                self.db.commit()
+                self.db.refresh(country)
 
-        return country
+            return country
+        except Exception:
+            self.db.rollback()
+            raise
