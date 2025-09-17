@@ -90,7 +90,6 @@ class OddsCalculationService:
             return None
 
         last_season = self.db.query(Season).filter(Season.season_year == self.get_previous_season_year(season.season_year)).first()
-        last_season = self.db.query(Season).filter(Season.season_year == self.get_previous_season_year(season.season_year)).first()
         if not last_season:
             print(f"[WARN] No previous season found for year: {self.get_previous_season_year(season.season_year)}")
         last_season_id = last_season.season_id if last_season else None
@@ -269,7 +268,7 @@ class OddsCalculationService:
         # Case 1: stayed vs stayed & promoted vs promoted & relegated vs relegated
         if home_status == "stayed" and away_status == "stayed":
             return (home_win_adjusted, away_win_adjusted, draw_adjusted)
-        elif home_status == "promoted" and away_status == "promted":
+        elif home_status == "promoted" and away_status == "promoted":
             return (home_win_adjusted, away_win_adjusted, draw_adjusted)
         elif home_status == "relegated" and away_status == "relegated":
             return (home_win_adjusted, away_win_adjusted, draw_adjusted)
