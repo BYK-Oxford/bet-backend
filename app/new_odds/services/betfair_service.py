@@ -256,62 +256,71 @@ class BetfairService:
         event_name = event_dict["event_name"]
         start_time = datetime.strptime(event_dict["start_time"], "%Y-%m-%dT%H:%M:%S.%fZ")
 
-        # Map competition to league code
-        league_code = self.map_betfair_competition_to_league(competition_name)
-        if not league_code:
-            print(f"Unsupported league: {competition_name} for {event_name}")
-            return
-
-        # Parse team names
         try:
-            home_team, away_team = self.parse_teams_from_event(event_name)
-        except ValueError as e:
-            print(f"Parse error for {event_name}: {e}")
-            return
+            # Map competition to league code
+            league_code = self.map_betfair_competition_to_league(competition_name)
+            if not league_code:
+                print(f"Unsupported league: {competition_name} for {event_name}")
+                return
 
-        # Find MATCH_ODDS market
-        match_market = next(
-            (m for m in event_dict["markets"] if m["market_name"].lower().replace(" ", "") == "matchodds"),
-            None
-        )
+            # Parse team names
+            try:
+                home_team, away_team = self.parse_teams_from_event(event_name)
+            except ValueError as e:
+                print(f"Parse error for {event_name}: {e}")
+                return
 
-        if not match_market:
-            print(f"No MATCH_ODDS market found for {event_name}")
-            return
+            # Find MATCH_ODDS market
+            match_market = next(
+                (m for m in event_dict["markets"] if m["market_name"].lower().replace(" ", "") == "matchodds"),
+                None
+            )
+            if not match_market:
+                print(f"No MATCH_ODDS market found for {event_name}")
+                return
 
-        # Extract odds
-        home_odds = draw_odds = away_odds = None
-        for sel in match_market["selections"]:
-            name = sel["name"].lower()
-            best_back = sel.get("best_back", {})
-            price = best_back.get("price") if best_back else None
+            # Extract odds
+            home_odds = draw_odds = away_odds = None
+            for sel in match_market["selections"]:
+                name = sel["name"].lower()
+                best_back = sel.get("best_back", {})
+                price = best_back.get("price") if best_back else None
 
-            if price:
-                if name == home_team.lower():
-                    home_odds = price
-                elif "draw" in name:
-                    draw_odds = price
-                elif name == away_team.lower():
-                    away_odds = price
-        print(f"Extracted odds for {event_name}: Home={home_odds}, Draw={draw_odds}, Away={away_odds}")
-        if not all([home_odds, draw_odds, away_odds]):
-            print(f"Incomplete odds for {event_name} - skipping")
-            return
-        full_event_json = json.dumps(event_dict)
-        odds_data = {
-            'date': start_time.date(),
-            'time': start_time.time(),
-            'home_team_id': self.team_service.get_or_create_team(home_team, league_code).team_id,
-            'away_team_id': self.team_service.get_or_create_team(away_team, league_code).team_id,
-            'home_odds': home_odds,
-            'draw_odds': draw_odds,
-            'away_odds': away_odds,
-            'league_code': league_code,
-            'full_market_data': full_event_json
-        }
+                if price:
+                    if name == home_team.lower():
+                        home_odds = price
+                    elif "draw" in name:
+                        draw_odds = price
+                    elif name == away_team.lower():
+                        away_odds = price
 
-        print(f"Saving Odds: {event_name} | H {home_odds} | D {draw_odds} | A {away_odds}")
-        self.new_odds_service.create_new_odds(odds_data)
+            print(f"Extracted odds for {event_name}: Home={home_odds}, Draw={draw_odds}, Away={away_odds}")
+            if not all([home_odds, draw_odds, away_odds]):
+                print(f"Incomplete odds for {event_name} - skipping")
+                return
+
+            full_event_json = json.dumps(event_dict)
+            odds_data = {
+                'date': start_time.date(),
+                'time': start_time.time(),
+                'home_team_id': self.team_service.get_or_create_team(home_team, league_code).team_id,
+                'away_team_id': self.team_service.get_or_create_team(away_team, league_code).team_id,
+                'home_odds': home_odds,
+                'draw_odds': draw_odds,
+                'away_odds': away_odds,
+                'league_code': league_code,
+                'full_market_data': full_event_json
+            }
+
+            print(f"Saving Odds: {event_name} | H {home_odds} | D {draw_odds} | A {away_odds}")
+
+            # Safe DB operation
+            self.new_odds_service.create_new_odds(odds_data)
+            self.db.commit()  # Commit after successful insert
+        except Exception as e:
+            self.db.rollback()  # Rollback if anything fails
+            print(f"❌ Error saving odds for event {event_name}: {e}")
+
 
 
     def parse_teams_from_event(self, event_name: str) -> tuple:

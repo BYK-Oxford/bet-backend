@@ -46,51 +46,55 @@ class NewOddsService:
         
         # Find matching league using league_code
         league = self._find_matching_league(odds_data['league_code'])
-        
-        # Check if odds already exist for this match
-        existing_odds = self.db.query(NewOdds).filter_by(
-            home_team_id=odds_data['home_team_id'],
-            away_team_id=odds_data['away_team_id'],
-            date=odds_data['date'],
-            time=odds_data['time']
-        ).first()
-        
-        if existing_odds:
-            # Update existing odds with new values
-            existing_odds.home_odds = odds_data['home_odds']
-            existing_odds.draw_odds = odds_data['draw_odds']
-            existing_odds.away_odds = odds_data['away_odds']
-            existing_odds.time = odds_data['time']
-            existing_odds.season_id = season.season_id
-            existing_odds.league_id = league.league_id
-            existing_odds.full_market_data = odds_data['full_market_data']
+        try:
+            # Check if odds already exist for this match
+            existing_odds = self.db.query(NewOdds).filter_by(
+                home_team_id=odds_data['home_team_id'],
+                away_team_id=odds_data['away_team_id'],
+                date=odds_data['date'],
+                time=odds_data['time']
+            ).first()
+            
+            if existing_odds:
+                # Update existing odds with new values
+                existing_odds.home_odds = odds_data['home_odds']
+                existing_odds.draw_odds = odds_data['draw_odds']
+                existing_odds.away_odds = odds_data['away_odds']
+                existing_odds.time = odds_data['time']
+                existing_odds.season_id = season.season_id
+                existing_odds.league_id = league.league_id
+                existing_odds.full_market_data = odds_data['full_market_data']
+                self.db.commit()
+                self.db.refresh(existing_odds)
+                return existing_odds
+
+            # Generate a custom ID for new odds
+            new_id = generate_custom_id(self.db, NewOdds, "NO", "new_odds_id")
+
+            # Create a new NewOdds instance with the provided data
+            new_odds = NewOdds(
+                new_odds_id=new_id,
+                date=odds_data['date'],
+                time=odds_data['time'],
+                home_team_id=odds_data['home_team_id'],
+                away_team_id=odds_data['away_team_id'],
+                home_odds=odds_data['home_odds'],
+                draw_odds=odds_data['draw_odds'],
+                away_odds=odds_data['away_odds'],
+                season_id=season.season_id,
+                league_id=league.league_id,
+                full_market_data=odds_data['full_market_data']
+
+            )
+
+
+            # Add the new odds to the session and commit the transaction
+            self.db.add(new_odds)
             self.db.commit()
-            self.db.refresh(existing_odds)
-            return existing_odds
-
-        # Generate a custom ID for new odds
-        new_id = generate_custom_id(self.db, NewOdds, "NO", "new_odds_id")
-
-        # Create a new NewOdds instance with the provided data
-        new_odds = NewOdds(
-            new_odds_id=new_id,
-            date=odds_data['date'],
-            time=odds_data['time'],
-            home_team_id=odds_data['home_team_id'],
-            away_team_id=odds_data['away_team_id'],
-            home_odds=odds_data['home_odds'],
-            draw_odds=odds_data['draw_odds'],
-            away_odds=odds_data['away_odds'],
-            season_id=season.season_id,
-            league_id=league.league_id,
-            full_market_data=odds_data['full_market_data']
-
-        )
-
-
-        # Add the new odds to the session and commit the transaction
-        self.db.add(new_odds)
-        self.db.commit()
-        self.db.refresh(new_odds)
-        
-        return new_odds
+            self.db.refresh(new_odds)
+            
+            return new_odds
+        except Exception as e:
+            self.db.rollback()  # undo any uncommitted changes
+            print(f"Error creating/updating new game odds: {e}")
+            return None
