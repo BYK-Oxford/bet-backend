@@ -123,6 +123,24 @@ class LiveGameDataService:
         return self.db.query(LiveGameData).filter_by(odds_calculation_id=odds_calculation_id).first()
 
 
+    def get_bulk_live_game_data(self, odds_calculation_ids: list):
+        """
+        Fetch all live game data for a list of odds_calculation_ids in one query.
+        Returns a dictionary keyed by odds_calculation_id for fast lookup.
+        """
+        if not odds_calculation_ids:
+            return {}
+
+        # Fetch all live data for given IDs in one query
+        live_data_list = self.db.query(LiveGameData).filter(
+            LiveGameData.odds_calculation_id.in_(odds_calculation_ids)
+        ).all()
+
+        # Convert to dictionary for fast lookup
+        live_data_lookup = {ld.odds_calculation_id: ld for ld in live_data_list}
+
+        return live_data_lookup
+
     def check_and_update_live_games(self):
         today = date.today()
         todays_odds_calculations = self.db.query(OddsCalculation).filter(
