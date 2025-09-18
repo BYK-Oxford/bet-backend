@@ -27,8 +27,8 @@ async def startup():
     try:
         init_db()  # Calls Base.metadata.create_all(bind=engine)
         logger.info("✅ Database connected and tables created.")
-        #start_scheduler()  # ⬅️ Start your cron-based background scheduler here
-        #logger.info("⏰ Scheduler started.")
+        start_scheduler()  # ⬅️ Start your cron-based background scheduler here
+        logger.info("⏰ Scheduler started.")
     except Exception as e:
         logger.error(f"❌ Database connection error: {e}")
 
