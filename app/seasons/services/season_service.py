@@ -25,9 +25,13 @@ class SeasonService:
                 season_id=new_id,
                 season_year=formatted_season
             )
-            self.db.add(season)
-            self.db.commit()
-            self.db.refresh(season)
+            try:
+                self.db.add(season)
+                self.db.commit()
+                self.db.refresh(season)
+            except Exception as e:
+                self.db.rollback()  # Rollback on failure
+                raise e
 
         return season
 

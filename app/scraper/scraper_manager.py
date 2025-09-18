@@ -122,7 +122,10 @@ class ScraperManager:
 
             return "TheFishy Scraping: Success"
         except Exception as e:
+            self.new_odds_service.db.rollback()
             return f"TheFishy Scraping: Failed - {str(e)}"
+        finally:
+            self.new_odds_service.db.close() 
         
 
 

@@ -18,13 +18,17 @@ class TeamAliasService:
         alias = self.db.query(TeamAlias).filter(TeamAlias.alias_name == alias_name, TeamAlias.team_id == team_id).first()
 
         if not alias:
-            # Generate unique alias_id (TA1, TA2, etc.)
-            new_id = generate_custom_id(self.db, TeamAlias, "TA", "alias_id")
+            try:
+                # Generate unique alias_id (TA1, TA2, etc.)
+                new_id = generate_custom_id(self.db, TeamAlias, "TA", "alias_id")
 
-            alias = TeamAlias(alias_id=new_id, alias_name=alias_name, team_id=team_id)
-            self.db.add(alias)
-            self.db.commit()
-            self.db.refresh(alias)
+                alias = TeamAlias(alias_id=new_id, alias_name=alias_name, team_id=team_id)
+                self.db.add(alias)
+                self.db.commit()
+                self.db.refresh(alias)
+            except Exception as e:
+                self.db.rollback()  # Rollback if commit fails
+                raise e
 
         return alias
 

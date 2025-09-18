@@ -14,57 +14,61 @@ class StandingService:
 
     def create_standing(self, standing_data: dict):
         """Create or update a standing record in the database."""
+        try:
         
-        # Get or create related entities
-        league = self.league_service.get_or_create_league(standing_data["league"])
-        season = self.season_service.get_or_create_season(standing_data["season"])
-        team = self.team_service.get_or_create_team(standing_data["team"], standing_data["league"])
+            # Get or create related entities
+            league = self.league_service.get_or_create_league(standing_data["league"])
+            season = self.season_service.get_or_create_season(standing_data["season"])
+            team = self.team_service.get_or_create_team(standing_data["team"], standing_data["league"])
 
-        # Check for existing standing
-        existing_standing = (
-            self.db.query(Standing)
-            .filter(
-                Standing.team_id == team.team_id,
-                Standing.league_id == league.league_id,
-                Standing.season_id == season.season_id
+            # Check for existing standing
+            existing_standing = (
+                self.db.query(Standing)
+                .filter(
+                    Standing.team_id == team.team_id,
+                    Standing.league_id == league.league_id,
+                    Standing.season_id == season.season_id
+                )
+                .first()
             )
-            .first()
-        )
 
-        if existing_standing:
-            # Update only non-FK fields
-            update_fields = [
-                "position", "played", "wins", "draws", "losses",
-                "goals_for", "goals_against", "goal_difference", "points"
-            ]
-            for key in update_fields:
-                if key in standing_data:
-                    setattr(existing_standing, key, standing_data[key])
+            if existing_standing:
+                # Update only non-FK fields
+                update_fields = [
+                    "position", "played", "wins", "draws", "losses",
+                    "goals_for", "goals_against", "goal_difference", "points"
+                ]
+                for key in update_fields:
+                    if key in standing_data:
+                        setattr(existing_standing, key, standing_data[key])
+                self.db.commit()
+                self.db.refresh(existing_standing)
+                return existing_standing
+
+            
+            new_id = generate_custom_id(self.db, Standing, "S", "standing_id")
+
+            # Create new standing
+            standing = Standing(
+                standing_id=new_id,
+                team_id=team.team_id,     
+                league_id=league.league_id,  
+                season_id=season.season_id, 
+                position=standing_data["position"],
+                played=standing_data["played"],
+                wins=standing_data["wins"],
+                draws=standing_data["draws"],
+                losses=standing_data["losses"],
+                goals_for=standing_data["goals_for"],
+                goals_against=standing_data["goals_against"],
+                goal_difference=standing_data["goal_difference"],
+                points=standing_data["points"]
+            )
+
+            self.db.add(standing)
             self.db.commit()
-            self.db.refresh(existing_standing)
-            return existing_standing
-
-        
-        new_id = generate_custom_id(self.db, Standing, "S", "standing_id")
-
-        # Create new standing
-        standing = Standing(
-            standing_id=new_id,
-            team_id=team.team_id,     
-            league_id=league.league_id,  
-            season_id=season.season_id, 
-            position=standing_data["position"],
-            played=standing_data["played"],
-            wins=standing_data["wins"],
-            draws=standing_data["draws"],
-            losses=standing_data["losses"],
-            goals_for=standing_data["goals_for"],
-            goals_against=standing_data["goals_against"],
-            goal_difference=standing_data["goal_difference"],
-            points=standing_data["points"]
-        )
-
-        self.db.add(standing)
-        self.db.commit()
-        self.db.refresh(standing)
-        return standing
+            self.db.refresh(standing)
+            return standing
+        except Exception as e:
+            self.db.rollback()  # rollback on any error
+            raise e

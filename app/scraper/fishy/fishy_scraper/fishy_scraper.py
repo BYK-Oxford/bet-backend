@@ -4,16 +4,27 @@ import os
 from bs4 import BeautifulSoup
 
 async def get_fishy_page_content(url):
+    browser = None
+    page_content = None
     async with async_playwright() as p:
-        browser = await p.chromium.launch(
-            headless=True,
-            args=["--no-sandbox"]  # Add this if running inside Docker
-        )
-        page = await browser.new_page()
-        await page.goto(url)
-        await asyncio.sleep(10)  # Wait for the page to load
-        page_content = await page.content()
-        await browser.close()
+        try:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox"]  # Add this if running inside Docker
+            )
+            page = await browser.new_page()
+            await page.goto(url)
+            await asyncio.sleep(10)  # Wait for the page to load
+            page_content = await page.content()
+        except Exception as e:
+            print(f"⚠️ Failed to fetch page: {e}")
+            page_content = None
+        finally:
+            if browser:
+                try:
+                    await browser.close()
+                except Exception as e:
+                    print(f"⚠️ Failed to close browser cleanly: {e}")
         return page_content
 
 
