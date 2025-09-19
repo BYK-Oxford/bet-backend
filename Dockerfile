@@ -1,6 +1,9 @@
 # Use an official Python runtime as a parent image
 FROM python:3.13.2-slim
 
+# Install tini (to prevent zombie processes)
+RUN apt-get update && apt-get install -y tini && rm -rf /var/lib/apt/lists/*
+
 # Set environment variables for Playwright installation
 ENV PYTHONUNBUFFERED 1
 
@@ -42,6 +45,9 @@ COPY . /app
 
 # Expose the port your application will run on (e.g., 8000)
 EXPOSE 8000
+
+# Use tini as entrypoint to reap zombies
+ENTRYPOINT ["/usr/bin/tini", "--"]
 
 # Command to run your app using Uvicorn
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
