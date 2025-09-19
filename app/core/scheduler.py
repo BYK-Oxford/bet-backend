@@ -49,7 +49,7 @@ def calculate_odds():
     import asyncio
 
     async def task():
-        async with httpx.AsyncClient(timeout=httpx.Timeout(480.0)) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(f"{base_url}/odds-calculation/calculate-ratios/", headers=headers)
             logger.info(f"📨 Odds calculation status: {resp.status_code}")
 
