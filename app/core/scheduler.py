@@ -134,14 +134,18 @@ def start_scheduler():
         p = Process(target=live_game_update)
         try:
             p.start()
-            p.join()  # wait for process to finish
+            # Wait up to 6 minutes (360 seconds) for process to finish
+            p.join(timeout=360)  # wait for process to finish
         except Exception as e:
             logger.error(f"❌ Error in scheduled_live_update process: {e}")
         finally:
             if p.is_alive():
+                logger.warning("⚠ live_game_update Process exceeded 6 mins, terminating...")
                 p.terminate()
                 p.join()
                 logger.warning("⚠ live_game_update Process terminated forcefully")
+            else:
+                logger.info("✅ live_game_update finished within 6 mins")   
 
     scheduler.start()
     logger.info("✅ Scheduler started with live update + scraper jobs")
