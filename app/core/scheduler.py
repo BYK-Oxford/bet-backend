@@ -6,6 +6,7 @@ from app.live_data.services.live_game_date_service import LiveGameDataService
 from app.core.database import SessionLocal
 from multiprocessing import Process
 import httpx
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,8 @@ def live_game_update():
         logger.error(f"❌ Error in live_game_update: {e}")
     finally:
         db.close()
+
+    sys.exit(0)
 
 
 def start_scheduler():
@@ -128,7 +131,7 @@ def start_scheduler():
         logger.info("-------------------------")
 
     # Live game update every 6 minutes (heavy)
-    @scheduler.scheduled_job(IntervalTrigger(minutes=6))
+    @scheduler.scheduled_job(IntervalTrigger(minutes=6),max_instances=1)
     def scheduled_live_update():
         logger.info("🔁 Running scheduled check_and_update_live_games()")
         p = Process(target=live_game_update)
