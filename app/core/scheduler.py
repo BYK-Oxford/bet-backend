@@ -4,6 +4,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from app.live_data.services.live_game_date_service import LiveGameDataService
 from app.core.database import SessionLocal
+from app.core.cleanup_function import cleanup_connections
 from multiprocessing import Process
 import httpx
 import sys
@@ -149,6 +150,10 @@ def start_scheduler():
                 logger.warning("⚠ live_game_update Process terminated forcefully")
             else:
                 logger.info("✅ live_game_update finished within 6 mins")   
+
+            # 🔑 Cleanup DB connections
+            cleanup_connections()
+
 
     scheduler.start()
     logger.info("✅ Scheduler started with live update + scraper jobs")
