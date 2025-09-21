@@ -12,7 +12,7 @@ def cleanup_connections():
             result = conn.execute(text("""
                 SELECT pg_terminate_backend(pid)
                 FROM pg_stat_activity
-                WHERE datname = current_database()
+                WHERE usename = 'postgres'
                   AND state = 'idle'
                   AND pid <> pg_backend_pid();
             """))
