@@ -72,6 +72,4 @@ class BettingOddsService:
             return odds
         except Exception:
             self.db.rollback()
-            raise
-        finally:
-            self.db.close()   # <-- ensures session released
+            raise 

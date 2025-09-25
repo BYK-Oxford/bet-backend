@@ -121,7 +121,8 @@ class BetfairService:
         target_names = [
                 "English Premier League","English Sky Bet Championship","Scottish Premiership",
                 "Scottish Championship","Turkish Super League","Spanish La Liga","Spanish Segunda Division",
-                "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A", "Italian Serie B"
+                "German Bundesliga","German Bundesliga 2","French Ligue 1", "Italian Serie A", "Italian Serie B",
+                "Portuguese Primeira Liga","Dutch Eredivisie"
                 ]
         
         event_type_id = "1"  # Soccer
@@ -358,6 +359,8 @@ class BetfairService:
             "Italian Serie B": "I2",  
             "French Ligue 1": "F1",  
             "Turkish Super League": "T1",  
+            "Dutch Eredivisie": "N1",  
+            "Portuguese Primeira Liga": "P1",  
 
         }
         return league_mapping.get(str(betfair_comp_name))

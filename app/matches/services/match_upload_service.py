@@ -138,10 +138,10 @@ class UploadService:
                     "red_cards_away": self.safe_int(row.get("AR")),
                 }
 
-
+                match_id = match.match_id
                 # Create match statistics
                 self.match_statistics_service.create_match_statistics(
-                    match_id=match.match_id, statistics_data=statistics_data
+                    match_id=match_id, statistics_data=statistics_data
                 )
 
             return {"message": "CSV uploaded and processed successfully"}

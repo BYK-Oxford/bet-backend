@@ -23,5 +23,3 @@ class RefereeService:
         except:
             self.db.rollback()
             raise
-        finally:
-            self.db.close()

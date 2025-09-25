@@ -22,6 +22,9 @@ class CountryService:
             "SP2": "Spain",
             "D1": "German",
             "D2": "German",
+            "N1": "Netherland",
+            "P1": "Portugal",
+
 
         }
 
@@ -45,8 +48,6 @@ class CountryService:
                     country_name=country_name      # Save the corresponding country name
                 )
                 self.db.add(country)
-                self.db.commit()
-                self.db.refresh(country)
 
             return country
         except Exception:

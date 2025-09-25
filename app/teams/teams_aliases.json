@@ -472,5 +472,89 @@
   "Dynamo": ["Dynamo", "Dynamo Dresden", "SG Dynamo Dresden"],
   "Ingolstadt": ["Ingolstadt", "FC Ingolstadt 04"],
   "Logrones": ["Logrones", "UD Logrones"],
-  "Andorra": ["Andorra", "FC Andorra", "Andorra CF"]
+  "Andorra": ["Andorra", "FC Andorra", "Andorra CF"],
+  "Vitesse": ["Vitesse", "SBV Vitesse", "Vitesse Arnhem"],
+
+  "Feyenoord": ["Feyenoord", "Feyenoord Rotterdam", "Feyenoord FC"],
+  "PSV Eindhoven": ["PSV", "PSV Eindhoven", "PSV FC"],
+  "AFC Ajax": ["Ajax", "AFC Ajax", "Ajax Amsterdam", "Ajax FC"],
+  "AZ Alkmaar": ["AZ", "AZ Alkmaar", "AZ67", "AZ FC", "Alkmaar"],
+  "FC Groningen": ["Groningen", "FC Groningen"],
+  "Fortuna Sittard": ["Fortuna", "Fortuna Sittard", "Sittard"],
+  "NEC Nijmegen": ["NEC", "NEC Nijmegen", "N.E.C."],
+  "FC Utrecht": ["Utrecht", "FC Utrecht"],
+  "Go Ahead Eagles": ["Go Ahead Eagles", "GA Eagles", "Eagles"],
+  "Sparta Rotterdam": ["Sparta", "Sparta Rotterdam"],
+  "FC Twente": ["Twente", "FC Twente", "Twente Enschede"],
+  "PEC Zwolle": ["PEC Zwolle", "Zwolle"],
+  "NAC Breda": ["NAC Breda", "NAC"],
+  "Excelsior": ["Excelsior", "SBV Excelsior"],
+  "SC Heerenveen": ["Heerenveen", "SC Heerenveen"],
+  "FC Volendam": ["Volendam", "FC Volendam"],
+  "SC Telstar": ["Telstar", "SC Telstar"],
+  "Heracles Almelo": ["Heracles", "Heracles Almelo"],
+  "Willem II": ["Willem II", "Willem II Tilburg"],
+  "RKC Waalwijk": ["RKC", "RKC Waalwijk", "Waalwijk"],
+  "Almere City": ["Almere City", "Almere City FC"],
+  "SC Cambuur": ["Cambuur", "SC Cambuur", "Cambuur Leeuwarden"],
+  "ADO Den Haag": ["ADO Den Haag", "Den Haag", "ADO"],
+  "FC Dordrecht": ["Dordrecht", "FC Dordrecht"],
+
+  "FC Porto": ["Porto", "FC Porto", "Futebol Clube do Porto"],
+  "Sporting Lisbon": [
+    "Sporting Lisbon",
+    "Sporting",
+    "Sporting CP",
+    "Sporting Clube de Portugal"
+  ],
+  "Benfica": ["Benfica", "SL Benfica", "Sport Lisboa e Benfica"],
+  "Gil Vicente": ["Gil Vicente", "Gil Vicente FC"],
+  "Moreirense": ["Moreirense", "Moreirense FC"],
+  "Famalicão": ["Famalicão", "FC Famalicão", "Famalicao", "FC Famalicao"],
+  "Sporting Braga": ["Braga", "Sporting Braga", "SC Braga"],
+  "Vitória SC": [
+    "Vitória",
+    "Vitória SC",
+    "Vitória Guimarães",
+    "Vitória de Guimarães"
+  ],
+  "Santa Clara": ["Santa Clara", "CD Santa Clara"],
+  "FC Arouca": ["Arouca", "FC Arouca"],
+  "Casa Pia": ["Casa Pia", "Casa Pia AC"],
+  "Estoril Praia": [
+    "Estoril",
+    "Estoril Praia",
+    "GD Estoril Praia",
+    "Estoril-Praia"
+  ],
+  "CF Estrela Amadora": [
+    "Estrela Amadora",
+    "CF Estrela Amadora",
+    "Estrela da Amadora",
+    "Club Football Estrela"
+  ],
+  "CD Nacional": [
+    "Nacional",
+    "CD Nacional",
+    "Nacional da Madeira",
+    "CD Nacional Funchal"
+  ],
+  "FC Alverca": ["Alverca", "FC Alverca"],
+  "Rio Ave": ["Rio Ave", "Rio Ave FC"],
+  "Tondela": ["Tondela", "CD Tondela"],
+  "AVS Futebol SAD": ["AVS", "AVS Futebol SAD", "AVS - Futebol SAD"],
+  "Vitoria Guimaraes": [
+    "Vitória SC",
+    "Vitória",
+    "Vitoria Guimaraes",
+    "Vitoria SC",
+    "Guimaraes",
+    "Vitoria"
+  ],
+  "Vizela": ["Vizela", "FC Vizela"],
+  "Benfica B": ["Benfica B", "SL Benfica B", "Sport Lisboa e Benfica B"],
+  "Torreense": ["Torreense", "SCU Torreense"],
+  "Leiria": ["Leiria", "UD Leiria", "União de Leiria", "Uniao Leiria"],
+  "SC Farense": ["Farense", "SC Farense", "Sporting Clube Farense"],
+  "Boavista FC": ["Boavista", "Boavista FC", "Boavista Porto"]
 }

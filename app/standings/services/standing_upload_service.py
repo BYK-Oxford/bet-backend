@@ -35,25 +35,25 @@ class StandingsService:
             # Rename columns to match expected format
             df.columns = [col.lower().replace(' ', '_') for col in df.columns]
 
-            with self.db.begin():  # Ensures rollback on error
-                for _, row in df.iterrows():
-                    standings_data = {
-                        "league": league_name,
-                        "season": season_year,
-                        "team": row["team"],
-                        "position": row["position"],
-                        "played": row["played"],
-                        "wins": row["wins"],
-                        "draws": row["draws"],
-                        "losses": row["losses"],
-                        "goals_for": row["goals_for"],
-                        "goals_against": row["goals_against"],
-                        "goal_difference": row["goal_difference"],
-                        "points": row["points"]
-                    }
+        
+            for _, row in df.iterrows():
+                standings_data = {
+                    "league": league_name,
+                    "season": season_year,
+                    "team": row["team"],
+                    "position": row["position"],
+                    "played": row["played"],
+                    "wins": row["wins"],
+                    "draws": row["draws"],
+                    "losses": row["losses"],
+                    "goals_for": row["goals_for"],
+                    "goals_against": row["goals_against"],
+                    "goal_difference": row["goal_difference"],
+                    "points": row["points"]
+                }
 
-                    # Call StandingService to handle DB logic
-                    self.standing_service.create_standing(standings_data)
+                # Call StandingService to handle DB logic
+                self.standing_service.create_standing(standings_data)
 
             return {"message": "Standings CSV uploaded and processed successfully"}
 

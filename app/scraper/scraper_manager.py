@@ -42,6 +42,8 @@ class ScraperManager:
             "https://thefishy.co.uk/leaguetable.php?table=32": "D1",
             "https://thefishy.co.uk/leaguetable.php?table=82": "D2",
             "https://thefishy.co.uk/leaguetable.php?table=34": "F1",
+            "https://thefishy.co.uk/leaguetable.php?table=36": "N1",
+            "https://thefishy.co.uk/leaguetable.php?table=37": "P1",
         }
     
     def run_scraper(self, url):

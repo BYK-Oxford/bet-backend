@@ -37,6 +37,7 @@ class MatchService:
         )
 
         if existing_match:
+            self.db.refresh(existing_match)
             return existing_match  # Prevent duplicate insertion
         
         new_id = generate_custom_id(self.db, Match, "M", "match_id")

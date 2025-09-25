@@ -17,6 +17,8 @@ class LeagueService:
         'SP2': 'Spanish Segunda Division',
         'D1': 'German Bundesliga',
         'D2': 'German Bundesliga 2',
+        'P1': 'Portuguese Primeira Liga',
+        'N1': 'Dutch Eredivisie',
         # Add more mappings as needed
     }
      
