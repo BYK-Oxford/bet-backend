@@ -22,7 +22,7 @@ class CountryService:
             "SP2": "Spain",
             "D1": "German",
             "D2": "German",
-            "N1": "Netherland",
+            "N1": "Netherlands",
             "P1": "Portugal",
 
 
