@@ -13,7 +13,7 @@ class SofaScoreService:
         "Serie A", "Serie B",
         "Ligue 1",
         "Scottish Premiership", "Scottish Championship",
-        "Trendyol Süper Lig"
+        "Trendyol Süper Lig", "Liga Portugal Betclic", "VriendenLoterij Eredivisie"
     ]
 
     def __init__(self, headless: bool = True):
