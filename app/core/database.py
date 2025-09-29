@@ -7,7 +7,6 @@ from app.core.config import settings
 # Create the engine with `pool_pre_ping=True` to prevent stale connections
 engine = create_engine(settings.DATABASE_URL,
     pool_pre_ping=True,   # tests connections before using them
-    poolclass=NullPool, 
     pool_recycle=1800,    # recycle every 30 min to avoid stale connections
     pool_size=30,          # (optional) max number of persistent connections
     max_overflow=10,      # (optional) extra connections allowed
