@@ -11,10 +11,10 @@ def cleanup_connections():
         with engine.connect() as conn:
             result = conn.execute(text("""
                 SELECT pg_terminate_backend(pid)
-                FROM pg_stat_activity
-                WHERE usename NOT IN ('supabase_admin', 'authenticator', 'supabase_storage_admin', 'pgbouncer')
-                  AND state LIKE 'idle%'
-                  AND pid <> pg_backend_pid();
+FROM pg_stat_activity
+WHERE usename NOT IN ('supabase_admin', 'authenticator', 'supabase_storage_admin', 'pgbouncer')
+  AND state IN ('idle', 'idle in transaction')
+  AND pid <> pg_backend_pid();
             """))
             logger.info(f"⚡ Terminated {result.rowcount} idle connections")
     except Exception as e:

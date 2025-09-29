@@ -474,14 +474,15 @@
   "Logrones": ["Logrones", "UD Logrones"],
   "Andorra": ["Andorra", "FC Andorra", "Andorra CF"],
   "Vitesse": ["Vitesse", "SBV Vitesse", "Vitesse Arnhem"],
+  "Emmem": ["Emmem", "FC Emmem"],
 
   "Feyenoord": ["Feyenoord", "Feyenoord Rotterdam", "Feyenoord FC"],
   "PSV Eindhoven": ["PSV", "PSV Eindhoven", "PSV FC"],
   "AFC Ajax": ["Ajax", "AFC Ajax", "Ajax Amsterdam", "Ajax FC"],
   "AZ Alkmaar": ["AZ", "AZ Alkmaar", "AZ67", "AZ FC", "Alkmaar"],
   "FC Groningen": ["Groningen", "FC Groningen"],
-  "Fortuna Sittard": ["Fortuna", "Fortuna Sittard", "Sittard"],
-  "NEC Nijmegen": ["NEC", "NEC Nijmegen", "N.E.C."],
+  "Fortuna Sittard": ["Fortuna", "Fortuna Sittard", "Sittard", "For Sittard"],
+  "NEC Nijmegen": ["NEC", "NEC Nijmegen", "N.E.C.", "Nijmegen"],
   "FC Utrecht": ["Utrecht", "FC Utrecht"],
   "Go Ahead Eagles": ["Go Ahead Eagles", "GA Eagles", "Eagles"],
   "Sparta Rotterdam": ["Sparta", "Sparta Rotterdam"],
@@ -502,6 +503,8 @@
 
   "FC Porto": ["Porto", "FC Porto", "Futebol Clube do Porto"],
   "Sporting Lisbon": [
+    "SP Lisbon",
+    "Sp Lisbon",
     "Sporting Lisbon",
     "Sporting",
     "Sporting CP",
@@ -511,7 +514,13 @@
   "Gil Vicente": ["Gil Vicente", "Gil Vicente FC"],
   "Moreirense": ["Moreirense", "Moreirense FC"],
   "Famalicão": ["Famalicão", "FC Famalicão", "Famalicao", "FC Famalicao"],
-  "Sporting Braga": ["Braga", "Sporting Braga", "SC Braga"],
+  "Sporting Braga": [
+    "Braga",
+    "Sporting Braga",
+    "SC Braga",
+    "Sp Braga",
+    "SP Braga"
+  ],
   "Vitória SC": [
     "Vitória",
     "Vitória SC",
@@ -528,6 +537,7 @@
     "Estoril-Praia"
   ],
   "CF Estrela Amadora": [
+    "Estrela",
     "Estrela Amadora",
     "CF Estrela Amadora",
     "Estrela da Amadora",
@@ -552,6 +562,7 @@
     "Vitoria"
   ],
   "Vizela": ["Vizela", "FC Vizela"],
+  "Chaves": ["Chaves", "GD Chaves"],
   "Benfica B": ["Benfica B", "SL Benfica B", "Sport Lisboa e Benfica B"],
   "Torreense": ["Torreense", "SCU Torreense"],
   "Leiria": ["Leiria", "UD Leiria", "União de Leiria", "Uniao Leiria"],
