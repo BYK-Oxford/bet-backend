@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from app.core.config import settings
@@ -7,8 +8,8 @@ from app.core.config import settings
 engine = create_engine(settings.DATABASE_URL,
     pool_pre_ping=True,   # tests connections before using them
     pool_recycle=1800,    # recycle every 30 min to avoid stale connections
-    pool_size=2,          # (optional) max number of persistent connections
-    max_overflow=2,      # (optional) extra connections allowed
+    pool_size=5,          # (optional) max number of persistent connections
+    max_overflow=5,      # (optional) extra connections allowed
     pool_timeout=100      # (optional) wait 30s before giving up on a connection
     )
 
@@ -46,4 +47,11 @@ def init_db():
     
     # Use context manager to ensure connection is released
     with engine.begin() as conn:
+        conn.execute(text("""
+                SELECT pg_terminate_backend(pid)
+                FROM pg_stat_activity
+                WHERE usename='postgres'
+                AND state='idle'
+                AND pid<>pg_backend_pid();
+            """))
         Base.metadata.create_all(bind=conn)
