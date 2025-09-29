@@ -125,21 +125,21 @@ def start_scheduler():
 
 
     # Test print job every 6 minutes
-    @scheduler.scheduled_job(IntervalTrigger(minutes=3))
+    @scheduler.scheduled_job(IntervalTrigger(minutes=5))
     def scheduled_test_print():
         logger.info("-------------------------")
         logger.info("!!!! This is testing and printing scheduler !!!!")
         logger.info("-------------------------")
 
     # Live game update every 6 minutes (heavy)
-    @scheduler.scheduled_job(IntervalTrigger(minutes=3),max_instances=1)
+    @scheduler.scheduled_job(IntervalTrigger(minutes=5),max_instances=1)
     def scheduled_live_update():
         logger.info("🔁 Running scheduled check_and_update_live_games()")
         p = Process(target=live_game_update)
         try:
             p.start()
             # Wait up to 3 minutes (180 seconds) for process to finish
-            p.join(timeout=180)  # wait for process to finish
+            p.join(timeout=300)  # wait for process to finish
         except Exception as e:
             logger.error(f"❌ Error in scheduled_live_update process: {e}")
         finally:

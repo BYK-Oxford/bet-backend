@@ -1,15 +1,14 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.pool import NullPool
 from app.core.config import settings
 
 # Create the engine with `pool_pre_ping=True` to prevent stale connections
 engine = create_engine(settings.DATABASE_URL,
     pool_pre_ping=True,   # tests connections before using them
     pool_recycle=1800,    # recycle every 30 min to avoid stale connections
-    pool_size=5,          # (optional) max number of persistent connections
-    max_overflow=5,      # (optional) extra connections allowed
+    pool_size=10,          # (optional) max number of persistent connections
+    max_overflow=10,      # (optional) extra connections allowed
     pool_timeout=100      # (optional) wait 30s before giving up on a connection
     )
 
