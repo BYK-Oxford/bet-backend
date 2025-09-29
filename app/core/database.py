@@ -45,7 +45,8 @@ def init_db():
     from app.odds_calculation.models.odds_calculation_model import OddsCalculation
     from app.live_data.models.live_game_data import LiveGameData
     
-    # Use context manager to ensure connection is released
+    # Use context manager to ensure connection is released new cleanup before all
+
     with engine.begin() as conn:
         conn.execute(text("""
                 SELECT pg_terminate_backend(pid)
