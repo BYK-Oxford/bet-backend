@@ -34,7 +34,7 @@ async def startup():
 
 @app.get("/")
 async def home():
-    return {"message": "Welcome to Bet Backend", "database_status": "Connected"}
+    return {"message": "Welcome to Bet Backend"}
 
 # Include all API routes
 app.include_router(api_router)
