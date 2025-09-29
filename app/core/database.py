@@ -10,7 +10,7 @@ engine = create_engine(settings.DATABASE_URL,
     pool_recycle=1800,    # recycle every 30 min to avoid stale connections
     pool_size=5,          # (optional) max number of persistent connections
     max_overflow=5,      # (optional) extra connections allowed
-    pool_timeout=100      # (optional) wait 30s before giving up on a connection
+    pool_timeout=90      # (optional) wait 30s before giving up on a connection
     )
 
 # Create session factory
